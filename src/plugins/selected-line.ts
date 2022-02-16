@@ -7,7 +7,11 @@ export function selectedLinePlugin(): EditorPluginConfig {
     editor({ ctx, model, canvas, font }) {
       ctx.fillStyle = THEME.SELECTED_LINE_BG;
 
-      for (const { start } of model.selections) {
+      for (const { start, end } of model.selections) {
+        if (end) {
+          continue;
+        }
+
         ctx.fillRect(
           0,
           start.y * font.lineHeight - 2,

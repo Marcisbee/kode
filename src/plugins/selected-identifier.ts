@@ -4,6 +4,10 @@ import type { Model } from '../model';
 import type { EditorPluginConfig } from './types';
 
 export function selectedIdentifier({ text, selections }: Model): string | void {
+  if (selections[0].end) {
+    return;
+  }
+
   const x = selections[0].start.x;
   const y = selections[0].start.y;
 

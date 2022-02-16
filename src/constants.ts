@@ -54,8 +54,8 @@ export const RESERVED_KEYWORDS = [
 export const THEME = {
   CARET: 'orange',
   BG: '#15181e',
-  SELECTED_LINE_BG: '#25282e',
-  MATCH_IDENTIFIER_BG: '#36445e',
+  SELECTED_LINE_BG: 'rgba(255,255,255,0.05)',
+  MATCH_IDENTIFIER_BG: 'rgba(255,255,255,0.2)',
   HIDDEN: '#333',
   COMMENT: '#608b4e',
   RESERVED: '#c586c0',
@@ -66,6 +66,8 @@ export const THEME = {
   NUMBER: '#b5cea8',
   STRING: '#ce9178',
   DEFAULT: '#fff',
+  GUIDE: 'rgba(255,255,255,0.2)',
+  SELECTION: 'rgba(255,255,255,0.2)',
 };
 
 export const RENDER_HIDDEN = false;

@@ -84,7 +84,6 @@ export class Editor {
     window.addEventListener('orientationchange', this.onResize, false);
 
     this.canvas.addEventListener('mousewheel', this.onWheel, false);
-
     this.canvas.addEventListener('mousedown', this.onMouseDown, false);
 
     this.onResize();
@@ -192,12 +191,16 @@ export class Editor {
       selection.start.x = newStartX;
       selection.start.y = newStartY;
 
-      if (!selection.end) {
-        selection.end = {} as any;
-      }
+      if (initialX !== x || initialY !== y) {
+        if (!selection.end) {
+          selection.end = {} as any;
+        }
 
-      selection.end!.x = newEndX;
-      selection.end!.y = newEndY;
+        selection.end!.x = newEndX;
+        selection.end!.y = newEndY;
+      } else {
+        selection.end = undefined;
+      }
 
       this.updateCaret();
       this.renderModel();

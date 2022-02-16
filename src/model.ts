@@ -76,6 +76,36 @@ export class Model {
     const plugins = modelPlugins.map((fn) => fn(editor)).filter(Boolean);
 
     for (const token of this.tokens) {
+      if (col === 0 && this.selections.length > 0) {
+        ctx.fillStyle = THEME.SELECTION;
+
+        for (const { start, end } of this.selections) {
+          if (!end) {
+            continue;
+          }
+
+          if (start.y === row && end.y === row) {
+            this.renderSelections(editor, row, start.x, (end?.x || start.x) - start.x);
+            continue;
+          }
+
+          if (start.y === row && end.y > row) {
+            this.renderSelections(editor, row, start.x, this.text[row].length - start.x);
+            continue;
+          }
+
+          if (start.y <= row && end.y > row) {
+            this.renderSelections(editor, row, 0, Math.max(1, this.text[row].length));
+            continue;
+          }
+
+          if (start.y < row && end.y === row) {
+            this.renderSelections(editor, row, 0, Math.min(end?.x || 0, this.text[row].length));
+            continue;
+          }
+        }
+      }
+
       if (
         col === 0 &&
         token.type !== 'WhiteSpace' &&
@@ -88,7 +118,9 @@ export class Model {
         this.cacheLineGuide = Math.ceil(token.value.length / 2);
       }
 
-      this.renderGuides(editor, row);
+      if (col === 0) {
+        this.renderGuides(editor, row);
+      }
 
       resetFontOptions();
 
@@ -242,12 +274,21 @@ export class Model {
     );
   }
 
+  public renderSelections({ ctx, font, letterWidth }: Editor, row: number, start: number, end: number) {
+    ctx.fillRect(
+      this.gutterWidth + letterWidth * start,
+      font.lineHeight * row - 2,
+      letterWidth * end,
+      font.lineHeight
+    );
+  }
+
   public renderGuides({ ctx, font, letterWidth }: Editor, row: number) {
     if (!this.cacheLineGuide) {
       return;
     }
 
-    ctx.fillStyle = THEME.HIDDEN;
+    ctx.fillStyle = THEME.GUIDE;
 
     for (let i = 0; i < this.cacheLineGuide; i++) {
       ctx.fillRect(
