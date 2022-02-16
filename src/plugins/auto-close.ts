@@ -22,15 +22,15 @@ export function autoClosePlugin(): EditorPluginConfig {
           return;
         }
 
-        const line = model.text[model.y];
+        for (const { start } of model.selections) {
+          const line = model.text[start.y];
 
-        const beforeCaret = line.substring(0, model.x);
-        const selection = line.substring(model.x, model.x);
-        const afterCaret = line.substring(model.x, line.length);
+          const beforeCaret = line.substring(0, start.x);
+          const selection = line.substring(start.x, start.x);
+          const afterCaret = line.substring(start.x, line.length);
 
-        model.text[model.y] = `${beforeCaret}${selection}${after}${afterCaret}`;
-
-        return;
+          model.text[start.y] = `${beforeCaret}${selection}${after}${afterCaret}`;
+        }
       };
     },
   };

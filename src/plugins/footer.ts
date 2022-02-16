@@ -10,7 +10,15 @@ export function footerPlugin(): EditorPluginConfig {
       return () => {
         const t1 = performance.now();
 
-        FOOTER.innerHTML = `<strong>Line: ${model.y} Col: ${model.x}</strong>`
+        const selections = [];
+
+        for (const { start } of model.selections) {
+          const { x, y } = start;
+
+          selections.push(`${y}:${x}`);
+        }
+
+        FOOTER.innerHTML = `<strong>${selections.join(' | ')}</strong>`
           + ` | `
           + `<span>rendered in ${(t1 - t0).toFixed(2)}ms</span>`;
       };

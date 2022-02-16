@@ -7,6 +7,19 @@ export function keyMapPlugin(): EditorPluginConfig {
         if (event.metaKey) {
           // @TODO: Select all model
           if (event.key === 'a') {
+            const lastLineNumber = model.text.length - 1;
+            const lastLineLength = model.text[lastLineNumber].length;
+
+            model.selections = [{
+              start: {
+                x: 0,
+                y: 0,
+              },
+              end: {
+                x: lastLineLength,
+                y: lastLineNumber,
+              },
+            }];
             return;
           }
 
@@ -17,82 +30,94 @@ export function keyMapPlugin(): EditorPluginConfig {
           return;
         }
 
-        if (event.key === 'ArrowRight') {
-          const x = Math.min(model.x, model.text[model.y].length);
-          if (
-            x === model.text[model.y].length &&
-            model.y < model.text.length - 1
-          ) {
-            model.x = 0;
-            model.y += 1;
-          } else {
-            model.x = Math.min(x + 1, model.text[model.y].length);
+        for (const selection of model.selections) {
+          const { start } = selection;
+          const { x, y } = start;
+
+          selection.end = undefined;
+
+          if (event.key === 'ArrowRight') {
+            const lineLength = model.text[y].length;
+            const currentCol = Math.min(x, lineLength);
+
+            if (
+              currentCol === lineLength &&
+              start.y < model.text.length - 1
+            ) {
+              start.x = 0;
+              start.y += 1;
+            } else {
+              start.x = Math.min(currentCol + 1, lineLength);
+            }
           }
-        }
 
-        if (event.key === 'ArrowLeft') {
-          const x = Math.min(model.x, model.text[model.y].length);
-          if (x === 0 && model.y > 0) {
-            model.x = model.text[model.y - 1].length;
-            model.y = Math.max(model.y - 1, 0);
-          } else {
-            model.x = Math.max(x - 1, 0);
+          if (event.key === 'ArrowLeft') {
+            const lineLength = model.text[y].length;
+            const currentCol = Math.min(x, lineLength);
+
+            if (currentCol === 0 && y > 0) {
+              start.x = model.text[y - 1].length;
+              start.y = Math.max(y - 1, 0);
+            } else {
+              start.x = Math.max(currentCol - 1, 0);
+            }
           }
-        }
 
-        if (event.key === 'ArrowDown') {
-          model.y = Math.min(model.y + 1, model.text.length - 1);
-          // model.x = Math.min(model.x, model.text[model.y].length);
-        }
-
-        if (event.key === 'ArrowUp') {
-          model.y = Math.max(model.y - 1, 0);
-          // model.x = Math.min(model.x, model.text[model.y].length);
-        }
-
-        if (event.key === 'Enter') {
-          const chunks = [];
-
-          chunks.push(model.text[model.y].substring(0, model.x));
-          chunks.push(model.text[model.y].substring(model.x));
-
-          model.text.splice(model.y, 1, ...chunks);
-          model.y += 1;
-          model.x = 0;
-        }
-
-        if (event.key?.length === 1) {
-          const chunks = [];
-
-          chunks.push(model.text[model.y].substring(0, model.x));
-          chunks.push(event.key);
-          chunks.push(model.text[model.y].substring(model.x));
-
-          model.text.splice(model.y, 1, chunks.join(''));
-          model.x = Math.min(model.x + 1, model.text[model.y].length);
-        }
-
-        if (event.key === 'Backspace') {
-          let chunks = [];
-          const x = Math.min(model.x, model.text[model.y].length);
-
-          if (x === 0 && model.y - 1 >= 0) {
-            // Should move to previous line
-            chunks = model.text.slice(model.y - 1, model.y + 1);
-
-            model.x = model.text[model.y - 1].length;
-            model.text.splice(model.y - 1, 2, chunks.join(''));
-            model.y = Math.max(model.y - 1, 0);
-          } else {
-            chunks.push(model.text[model.y].substring(0, model.x - 1));
-            chunks.push(model.text[model.y].substring(model.x));
-
-            model.x = Math.max(x - 1, 0);
-            model.text.splice(model.y, 1, chunks.join(''));
+          if (event.key === 'ArrowDown') {
+            start.y = Math.min(y + 1, model.text.length - 1);
+            // model.x = Math.min(model.x, model.text[model.y].length);
           }
-        }
 
-        console.log(event);
+          if (event.key === 'ArrowUp') {
+            start.y = Math.max(y - 1, 0);
+            // model.x = Math.min(model.x, model.text[model.y].length);
+          }
+
+          if (event.key === 'Enter') {
+            const chunks = [];
+
+            chunks.push(model.text[y].substring(0, x));
+            chunks.push(model.text[y].substring(x));
+
+            model.text.splice(y, 1, ...chunks);
+            start.y += 1;
+            start.x = 0;
+          }
+
+          if (event.key === 'Backspace') {
+            let chunks = [];
+            const lineLength = model.text[y].length;
+            const currentCol = Math.min(x, lineLength);
+
+            if (currentCol === 0 && y - 1 >= 0) {
+              // Should move to previous line
+              chunks = model.text.slice(y - 1, y + 1);
+
+              start.x = model.text[y - 1].length;
+              model.text.splice(y - 1, 2, chunks.join(''));
+              start.y = Math.max(y - 1, 0);
+            } else {
+              chunks.push(model.text[y].substring(0, x - 1));
+              chunks.push(model.text[y].substring(x));
+
+              start.x = Math.max(currentCol - 1, 0);
+              model.text.splice(y, 1, chunks.join(''));
+            }
+          }
+
+          if (event.key?.length === 1) {
+            const chunks = [];
+
+            chunks.push(model.text[y].substring(0, x));
+            chunks.push(event.key);
+            chunks.push(model.text[y].substring(x));
+
+            model.text.splice(y, 1, chunks.join(''));
+            start.x = Math.min(x + 1, model.text[y].length);
+          }
+
+          console.log(event);
+        }
       };
     },
   };

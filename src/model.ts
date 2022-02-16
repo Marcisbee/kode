@@ -3,6 +3,17 @@ import jsTokens, { Token } from 'js-tokens';
 import { KEYWORDS, RENDER_HIDDEN, RESERVED_KEYWORDS, THEME } from './constants';
 import type { Editor } from './editor';
 
+export interface ModelSelection {
+  start: {
+    x: number;
+    y: number;
+  };
+  end?: {
+    x: number;
+    y: number;
+  }
+}
+
 export class Model {
   public gutterWidth = 50;
   private cachedTokens: Iterable<Token> = [];
@@ -10,7 +21,23 @@ export class Model {
 
   private cacheLineGuide = 0;
 
-  constructor(public text: string[] = [''], public x = 0, public y = 0) {}
+  constructor(
+    public text: string[] = [''],
+    public selections: ModelSelection[] = [
+      {
+        start: {
+          x: 0,
+          y: 0,
+        },
+      },
+      // {
+      //   start: {
+      //     x: 0,
+      //     y: 10,
+      //   }
+      // },
+    ],
+  ) {}
 
   get tokens() {
     const key = this.text.join('\n');
@@ -25,11 +52,13 @@ export class Model {
   public render(editor: Editor) {
     const { ctx, font, input, scroll, modelPlugins, letterWidth } = editor;
 
+    const startX = this.selections[0].start.x;
+    const startY = this.selections[0].start.y;
     const fontFamily = `${font.size}px ${font.family}`;
     const inputX =
       this.gutterWidth +
-      Math.min(this.x, this.text[this.y].length) * letterWidth;
-    const inputY = this.y * font.lineHeight;
+      Math.min(startX, this.text[startY].length) * letterWidth;
+    const inputY = startY * font.lineHeight;
 
     input.style.transform = `translate(${inputX}px, ${inputY - scroll}px)`;
 

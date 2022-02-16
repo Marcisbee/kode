@@ -1,5 +1,5 @@
 import { THEME } from './constants';
-import { Model } from './model';
+import { Model, ModelSelection } from './model';
 import { autoClosePlugin } from './plugins/auto-close';
 import { footerPlugin } from './plugins/footer';
 import { keyMapPlugin } from './plugins/key-map';
@@ -101,10 +101,10 @@ export class Editor {
     this.offScreenCanvas.width = wRatio;
     this.offScreenCanvas.height = hRatio;
 
-    this.canvas.style.width = w + 'px';
-    this.canvas.style.height = h + 'px';
-    this.offScreenCanvas.style.width = w + 'px';
-    this.offScreenCanvas.style.height = h + 'px';
+    this.canvas.style.width = `${w}px`;
+    this.canvas.style.height = `${h}px`;
+    this.offScreenCanvas.style.width = `${w}px`;
+    this.offScreenCanvas.style.height = `${h}px`;
 
     this.ctx.scale(devicePixelRatio, devicePixelRatio);
     this.realCtx.scale(devicePixelRatio, devicePixelRatio);
@@ -149,6 +149,14 @@ export class Editor {
 
     const { text, gutterWidth } = this.model;
 
+    const selection: ModelSelection = {
+      start: {
+        ...this.model.selections[0].start,
+      },
+    };
+
+    this.model.selections[0] = selection;
+
     const onMouseMove = (e: MouseEvent) => {
       const y = Math.min(
         text.length,
@@ -159,12 +167,12 @@ export class Editor {
         Math.max(0, Math.round((e.offsetX - gutterWidth) / this.letterWidth))
       );
 
-      const same = this.model.x === x && this.model.y === y;
+      const same = selection.start.x === x && selection.start.y === y;
+
+      selection.start.x = x;
+      selection.start.y = y;
 
       if (!same) {
-        this.model.x = x;
-        this.model.y = y;
-
         this.updateCaret();
         this.renderModel();
       }

@@ -3,15 +3,18 @@ import type { Model } from '../model';
 
 import type { EditorPluginConfig } from './types';
 
-export function selectedIdentifier(model: Model): string | void {
-  const line = model.text[model.y];
+export function selectedIdentifier({ text, selections }: Model): string | void {
+  const x = selections[0].start.x;
+  const y = selections[0].start.y;
 
-  if (!line[model.x]?.trim() && !line[model.x - 1]?.trim()) {
+  const line = text[y];
+
+  if (!line[x]?.trim() && !line[x - 1]?.trim()) {
     return;
   }
 
-  const before = [...line.substring(0, model.x)].reverse();
-  const after = line.substring(model.x);
+  const before = [...line.substring(0, x)].reverse();
+  const after = line.substring(x);
 
   let word = '';
   for (const char of after) {
