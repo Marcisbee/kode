@@ -31,6 +31,11 @@ export function keyMapPlugin(): EditorPluginConfig {
         }
 
         for (const selection of model.selections) {
+          if (event.shiftKey) {
+            // @TODO: Handle selection via shift
+            continue;
+          }
+
           const { start } = selection;
           const { x, y } = start;
 
