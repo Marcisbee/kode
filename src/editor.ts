@@ -157,6 +157,9 @@ export class Editor {
 
     this.model.selections[0] = selection;
 
+    let initialX: number;
+    let initialY: number;
+
     const onMouseMove = (e: MouseEvent) => {
       const y = Math.min(
         text.length,
@@ -167,15 +170,37 @@ export class Editor {
         Math.max(0, Math.round((e.offsetX - gutterWidth) / this.letterWidth))
       );
 
-      const same = selection.start.x === x && selection.start.y === y;
-
-      selection.start.x = x;
-      selection.start.y = y;
-
-      if (!same) {
-        this.updateCaret();
-        this.renderModel();
+      if (initialX === undefined && initialY === undefined) {
+        initialX = x;
+        initialY = y;
       }
+
+      const inverse = (y === initialY && x <= initialX) || (y < initialY);
+
+      const newStartX = !inverse ? initialX : x;
+      const newStartY = !inverse ? initialY : y;
+      const newEndX = inverse ? initialX : x;
+      const newEndY = inverse ? initialY : y;
+
+      const sameStart = newStartX === selection.start.x && newStartY === selection.start.y;
+      const sameEnd = newEndX === selection.end?.x && newEndY === selection.end?.y;
+
+      if (sameStart && sameEnd) {
+        return;
+      }
+
+      selection.start.x = newStartX;
+      selection.start.y = newStartY;
+
+      if (!selection.end) {
+        selection.end = {} as any;
+      }
+
+      selection.end!.x = newEndX;
+      selection.end!.y = newEndY;
+
+      this.updateCaret();
+      this.renderModel();
     };
 
     onMouseMove(e);
