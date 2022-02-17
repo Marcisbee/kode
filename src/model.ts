@@ -1,7 +1,10 @@
 import jsTokens, { Token } from 'js-tokens';
+import { tokenize } from './lexer/prism';
+import { typescript } from './lexer/languages/typescript';
 
 import { KEYWORDS, RENDER_HIDDEN, RESERVED_KEYWORDS, THEME } from './constants';
 import type { Editor } from './editor';
+import { normalizeTokens } from './lexer/normalize-tokens';
 
 export interface ModelSelection {
   start: {
@@ -46,7 +49,17 @@ export class Model {
       return this.cachedTokens;
     }
 
-    return (this.cachedTokens = jsTokens(this.text.join('\n')));
+    // this.key = key;
+
+    console.time('tokenize')
+    const rawTokens = tokenize(key, typescript) as any;
+    console.timeEnd('tokenize')
+    console.time('normalize')
+    const tokens = normalizeTokens(rawTokens);
+    console.timeEnd('normalize')
+    // console.log((tokenize(key, javascript)));
+
+    return (this.cachedTokens = jsTokens(key));
   }
 
   public render(editor: Editor) {
