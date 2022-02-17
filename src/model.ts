@@ -113,8 +113,7 @@ export class Model {
         }
       }
 
-      // @TODO: Normalize this beforehand.
-      const tokens = this.tokens[row].filter((t) => !t.empty && !!t.content);
+      const tokens = this.tokens[row];
 
       const firstToken = tokens?.[0];
       if (firstToken?.content) {
@@ -215,6 +214,8 @@ export class Model {
     const key = this.text.join('\n');
     const rawTokens = tokenize(key, typescript) as any;
 
-    this.tokens = normalizeTokens(rawTokens);
+    this.tokens = normalizeTokens(rawTokens)
+      // @TODO: Normalize this beforehand.
+      .map((row) => row.filter((t) => !t.empty && !!t.content));
   }
 }
