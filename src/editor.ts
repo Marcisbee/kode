@@ -3,6 +3,7 @@ import { autoClosePlugin } from './plugins/auto-close';
 import { footerPlugin } from './plugins/footer';
 import { keyMapPlugin } from './plugins/key-map';
 import { preserveIndent } from './plugins/preserve-indent';
+import { scrollbarPlugin } from './plugins/scrollbar';
 import { selectedIdentifierPlugin } from './plugins/selected-identifier';
 import { selectedLinePlugin } from './plugins/selected-line';
 import { tabPlugin } from './plugins/tab';
@@ -49,6 +50,7 @@ export class Editor {
       keyMapPlugin(),
       tabPlugin(),
       preserveIndent(),
+      scrollbarPlugin(),
     ],
     public font: EditorFontConfig = {
       size: 12,
