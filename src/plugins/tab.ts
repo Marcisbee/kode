@@ -20,6 +20,7 @@ export function tabPlugin(tabCharacter = '  '): EditorPluginConfig {
               x - (line.length - newLine.length),
               model.text[y].length
             );
+            model.refreshContents();
             return;
           }
 
@@ -34,6 +35,7 @@ export function tabPlugin(tabCharacter = '  '): EditorPluginConfig {
             x + tabCharacter.length,
             model.text[y].length
           );
+          model.refreshContents();
         }
       };
     },

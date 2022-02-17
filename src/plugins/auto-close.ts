@@ -30,6 +30,7 @@ export function autoClosePlugin(): EditorPluginConfig {
           const afterCaret = line.substring(start.x, line.length);
 
           model.text[start.y] = `${beforeCaret}${selection}${after}${afterCaret}`;
+          model.refreshContents();
         }
       };
     },

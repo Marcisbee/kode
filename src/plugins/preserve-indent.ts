@@ -44,6 +44,7 @@ export function preserveIndent(tabCharacter = '  '): EditorPluginConfig {
                 x + spacing.length,
                 model.text[y].length
               );
+              model.refreshContents();
               return;
             }
           }
@@ -63,6 +64,7 @@ export function preserveIndent(tabCharacter = '  '): EditorPluginConfig {
             x + matchesSpacing[0].length,
             model.text[y].length
           );
+          model.refreshContents();
         }
       };
     },

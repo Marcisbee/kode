@@ -54,6 +54,7 @@ export function keyMapPlugin(): EditorPluginConfig {
             } else {
               start.x = Math.min(currentCol + 1, lineLength);
             }
+            continue;
           }
 
           if (event.key === 'ArrowLeft') {
@@ -66,16 +67,19 @@ export function keyMapPlugin(): EditorPluginConfig {
             } else {
               start.x = Math.max(currentCol - 1, 0);
             }
+            continue;
           }
 
           if (event.key === 'ArrowDown') {
             start.y = Math.min(y + 1, model.text.length - 1);
             // model.x = Math.min(model.x, model.text[model.y].length);
+            continue;
           }
 
           if (event.key === 'ArrowUp') {
             start.y = Math.max(y - 1, 0);
             // model.x = Math.min(model.x, model.text[model.y].length);
+            continue;
           }
 
           if (event.key === 'Enter') {
@@ -120,6 +124,8 @@ export function keyMapPlugin(): EditorPluginConfig {
             model.text.splice(y, 1, chunks.join(''));
             start.x = Math.min(x + 1, model.text[y].length);
           }
+
+          model.refreshContents();
 
           console.log(event);
         }

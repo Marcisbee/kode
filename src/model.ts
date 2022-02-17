@@ -16,10 +16,8 @@ export interface ModelSelection {
 
 export class Model {
   public gutterWidth = 50;
-  private cachedTokens: Token[][] = [];
-  private key?: string;
-
-  private cacheLineGuide = 0;
+  private tokens: Token[][] = [];
+  private cachedLineGuide = 0;
 
   constructor(
     public text: string[] = [''],
@@ -37,23 +35,16 @@ export class Model {
       //   }
       // },
     ],
-  ) {}
+  ) {
+    this.updateTokens();
+  }
 
-  get tokens() {
-    const key = this.text.join('\n');
-
-    if (this.key === key) {
-      return this.cachedTokens;
-    }
-
-    this.key = key;
-
-    const rawTokens = tokenize(key, typescript) as any;
-    return this.cachedTokens = normalizeTokens(rawTokens);
+  public refreshContents() {
+    this.updateTokens();
   }
 
   public render(editor: Editor) {
-    const { ctx, font, input, scroll, modelPlugins, letterWidth, theme } = editor;
+    const { canvas, ctx, font, input, scroll, modelPlugins, letterWidth, theme } = editor;
 
     const startX = this.selections[0].start.x;
     const startY = this.selections[0].start.y;
@@ -71,9 +62,14 @@ export class Model {
       ctx.textBaseline = 'top';
     }
 
-    this.cacheLineGuide = 0;
+    this.cachedLineGuide = 0;
 
     const plugins = modelPlugins.map((fn) => fn(editor)).filter(Boolean);
+
+    const visibleLines = [
+      Math.floor(scroll / font.lineHeight),
+      Math.floor((canvas.height + scroll) / font.lineHeight),
+    ]
 
     for (const rowRaw in this.tokens) {
       const row = parseInt(rowRaw);
@@ -83,6 +79,10 @@ export class Model {
 
       if (row > 0) {
         ctx.translate(0, font.lineHeight);
+      }
+
+      if (row < visibleLines[0] || row > visibleLines[1]) {
+        continue;
       }
 
       if (this.selections.length > 0) {
@@ -117,20 +117,17 @@ export class Model {
 
       const firstToken = tokens?.[0];
       if (firstToken?.content) {
-        this.cacheLineGuide = 0;
+        this.cachedLineGuide = 0;
       }
 
       if (/^[ \t]+/.test(firstToken?.content)) {
-        this.cacheLineGuide = Math.ceil(firstToken.content.replace(/[^ \t].*$/, '').length / 2);
+        this.cachedLineGuide = Math.ceil(firstToken.content.replace(/[^ \t].*$/, '').length / 2);
       }
 
       this.renderGuides(editor);
       this.renderLineNumber(editor, col, row);
 
       for (const token of tokens) {
-
-        resetFontOptions();
-
         // if (token.type === 'LineTerminatorSequence') {
         //   if (RENDER_HIDDEN) {
         //     ctx.fillStyle = THEME.HIDDEN;
@@ -152,13 +149,8 @@ export class Model {
 
         const [type] = token.types.slice(-1);
 
+        resetFontOptions();
         ctx.fillStyle = theme[type] || theme.plain;
-
-        if (!theme[type]) {
-          console.log(token, type);
-        }
-
-        ctx.textBaseline = 'top';
         ctx.fillText(
           token.content,
           this.gutterWidth + letterWidth * col,
@@ -166,6 +158,10 @@ export class Model {
         );
 
         col += token.content.length;
+
+        if (!theme[type]) {
+          console.log('unhandled', token, type);
+        }
       }
     }
   }
@@ -198,13 +194,13 @@ export class Model {
   }
 
   public renderGuides({ ctx, font, letterWidth, theme }: Editor) {
-    if (!this.cacheLineGuide) {
+    if (!this.cachedLineGuide) {
       return;
     }
 
     ctx.fillStyle = theme.guide;
 
-    for (let i = 0; i < this.cacheLineGuide; i++) {
+    for (let i = 0; i < this.cachedLineGuide; i++) {
       ctx.fillRect(
         this.gutterWidth + letterWidth * (2 * i),
         -2,
@@ -212,5 +208,12 @@ export class Model {
         font.lineHeight
       );
     }
+  }
+
+  private updateTokens() {
+    const key = this.text.join('\n');
+    const rawTokens = tokenize(key, typescript) as any;
+
+    this.tokens = normalizeTokens(rawTokens);
   }
 }

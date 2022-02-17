@@ -84,7 +84,7 @@ export class Editor {
     window.addEventListener('resize', this.onResize, false);
     window.addEventListener('orientationchange', this.onResize, false);
 
-    this.canvas.addEventListener('mousewheel', this.onWheel, false);
+    this.canvas.addEventListener('mousewheel', this.onWheel);
     this.canvas.addEventListener('mousedown', this.onMouseDown, false);
 
     this.onResize();
