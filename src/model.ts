@@ -76,6 +76,10 @@ export class Model {
     const plugins = modelPlugins.map((fn) => fn(editor)).filter(Boolean);
 
     for (const token of this.tokens) {
+      if (col === 0 && row > 0) {
+        ctx.translate(0, font.lineHeight);
+      }
+
       if (col === 0 && this.selections.length > 0) {
         ctx.fillStyle = THEME.SELECTION;
 
@@ -85,22 +89,22 @@ export class Model {
           }
 
           if (start.y === row && end.y === row) {
-            this.renderSelections(editor, row, start.x, (end?.x || start.x) - start.x);
+            this.renderSelections(editor, start.x, (end?.x || start.x) - start.x);
             continue;
           }
 
           if (start.y === row && end.y > row) {
-            this.renderSelections(editor, row, start.x, this.text[row].length - start.x);
+            this.renderSelections(editor, start.x, this.text[row].length - start.x);
             continue;
           }
 
           if (start.y <= row && end.y > row) {
-            this.renderSelections(editor, row, 0, Math.max(1, this.text[row].length));
+            this.renderSelections(editor, 0, Math.max(1, this.text[row].length));
             continue;
           }
 
           if (start.y < row && end.y === row) {
-            this.renderSelections(editor, row, 0, Math.min(end?.x || 0, this.text[row].length));
+            this.renderSelections(editor, 0, Math.min(end?.x || 0, this.text[row].length));
             continue;
           }
         }
@@ -119,7 +123,8 @@ export class Model {
       }
 
       if (col === 0) {
-        this.renderGuides(editor, row);
+        this.renderGuides(editor);
+        this.renderLineNumber(editor, col, row);
       }
 
       resetFontOptions();
@@ -137,7 +142,7 @@ export class Model {
           ctx.fillText(
             line,
             this.gutterWidth + letterWidth * col,
-            2 + font.lineHeight * row
+            2
           );
 
           col += line.length;
@@ -151,14 +156,12 @@ export class Model {
             ctx.fillText(
               '↵',
               this.gutterWidth + letterWidth * col,
-              2 + font.lineHeight * row
+              2
             );
           }
 
           col = 0;
           row += 1;
-
-          this.renderLineNumber(editor, col, row);
         }
 
         continue;
@@ -170,13 +173,11 @@ export class Model {
           ctx.fillText(
             '↵',
             this.gutterWidth + letterWidth * col,
-            2 + font.lineHeight * row
+            2
           );
         }
         col = 0;
         row += 1;
-
-        this.renderLineNumber(editor, col, row);
 
         continue;
       }
@@ -244,13 +245,8 @@ export class Model {
       ctx.fillText(
         token.value,
         this.gutterWidth + letterWidth * col,
-        font.lineHeight * row + 2
+        2
       );
-
-      // Draw line number
-      if (col === 0) {
-        this.renderLineNumber(editor, col, row);
-      }
 
       col += token.value.length;
     }
@@ -270,20 +266,20 @@ export class Model {
     ctx.fillText(
       lineNumber,
       this.gutterWidth - 20 + letterWidth * col,
-      2 + font.lineHeight * row
+      3 + font.lineHeight * 0
     );
   }
 
-  public renderSelections({ ctx, font, letterWidth }: Editor, row: number, start: number, end: number) {
+  public renderSelections({ ctx, font, letterWidth }: Editor, start: number, end: number) {
     ctx.fillRect(
       this.gutterWidth + letterWidth * start,
-      font.lineHeight * row - 2,
+      -2,
       letterWidth * end,
       font.lineHeight
     );
   }
 
-  public renderGuides({ ctx, font, letterWidth }: Editor, row: number) {
+  public renderGuides({ ctx, font, letterWidth }: Editor) {
     if (!this.cacheLineGuide) {
       return;
     }
@@ -293,7 +289,7 @@ export class Model {
     for (let i = 0; i < this.cacheLineGuide; i++) {
       ctx.fillRect(
         this.gutterWidth + letterWidth * (2 * i),
-        font.lineHeight * row - 2,
+        -2,
         1,
         font.lineHeight
       );

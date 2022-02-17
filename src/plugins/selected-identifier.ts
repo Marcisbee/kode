@@ -53,7 +53,7 @@ export function selectedIdentifierPlugin(): EditorPluginConfig {
         return;
       }
 
-      return (token, col, row) => {
+      return (token, col) => {
         if (token.type !== 'IdentifierName') {
           return;
         }
@@ -73,7 +73,7 @@ export function selectedIdentifierPlugin(): EditorPluginConfig {
         ctx.fillStyle = THEME.MATCH_IDENTIFIER_BG;
         ctx.fillRect(
           model.gutterWidth + letterWidth * col,
-          font.lineHeight * row - 2,
+          -2,
           letterWidth * token.value.length,
           font.lineHeight
         );
