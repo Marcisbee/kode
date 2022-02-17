@@ -1,8 +1,15 @@
 import type { EditorPluginConfig } from './types';
 
-const FOOTER = document.getElementById('footer')!;
-
 export function footerPlugin(): EditorPluginConfig {
+  const footer = document.createElement('div');
+  footer.id = 'footer';
+
+  document.getElementById('app')!.appendChild(footer);
+
+  const stats = document.createElement('span');
+
+  footer.appendChild(stats);
+
   return {
     editor({ model }) {
       const t0 = performance.now();
@@ -18,9 +25,7 @@ export function footerPlugin(): EditorPluginConfig {
           selections.push(`${y}:${x}`);
         }
 
-        FOOTER.innerHTML = `<strong>${selections.join(' | ')}</strong>`
-          + ` | `
-          + `<span>rendered in ${(t1 - t0).toFixed(2)}ms</span>`;
+        stats.textContent = `${selections.join(' | ')} | rendered in ${(t1 - t0).toFixed(2)}ms`;
       };
     },
   };
