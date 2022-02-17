@@ -1,12 +1,10 @@
-import type { GrammarRest } from 'prismjs';
-
 import { util } from '../prism';
 
 import { javascript } from './javascript';
 
 const source = util.clone(javascript);
 
-export const typescript: GrammarRest = {
+export const typescript = {
   'decorator': {
     pattern: /@[$\w\xA0-\uFFFF]+/,
     inside: {

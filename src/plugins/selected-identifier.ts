@@ -1,4 +1,3 @@
-import { KEYWORDS, RESERVED_KEYWORDS, THEME } from '../constants';
 import type { Model } from '../model';
 
 import type { EditorPluginConfig } from './types';
@@ -46,7 +45,7 @@ export function selectedIdentifier({ text, selections }: Model): string | void {
 
 export function selectedIdentifierPlugin(): EditorPluginConfig {
   return {
-    model({ ctx, font, model, letterWidth }) {
+    model({ ctx, font, model, letterWidth, theme }) {
       const identifier = selectedIdentifier(model);
 
       if (!identifier) {
@@ -54,27 +53,25 @@ export function selectedIdentifierPlugin(): EditorPluginConfig {
       }
 
       return (token, col) => {
-        if (token.type !== 'IdentifierName') {
+        if (token.types.indexOf('keyword') > -1) {
           return;
         }
 
-        if (token.value !== identifier) {
+        if (token.types.indexOf('string') > -1) {
           return;
         }
 
-        if (RESERVED_KEYWORDS.indexOf(token.value) > -1) {
+        if (token.content.trim() !== identifier) {
           return;
         }
 
-        if (KEYWORDS.indexOf(token.value) > -1) {
-          return;
-        }
+        const leadingSpace = token.content.replace(/[^ \t].*$/, '');
 
-        ctx.fillStyle = THEME.MATCH_IDENTIFIER_BG;
+        ctx.fillStyle = theme['match-identifier'];
         ctx.fillRect(
-          model.gutterWidth + letterWidth * col,
+          model.gutterWidth + letterWidth * (col + leadingSpace.length),
           -2,
-          letterWidth * token.value.length,
+          letterWidth * token.content.trim().length,
           font.lineHeight
         );
       };

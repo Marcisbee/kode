@@ -1,11 +1,9 @@
-import { THEME } from '../constants';
-
 import type { EditorPluginConfig } from './types';
 
 export function selectedLinePlugin(): EditorPluginConfig {
   return {
-    editor({ ctx, model, canvas, font }) {
-      ctx.fillStyle = THEME.SELECTED_LINE_BG;
+    editor({ ctx, model, canvas, font, theme }) {
+      ctx.fillStyle = theme['selected-line'];
 
       for (const { start, end } of model.selections) {
         if (end) {

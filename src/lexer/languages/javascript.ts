@@ -1,12 +1,10 @@
-import type { GrammarRest } from 'prismjs';
-
 import { util } from '../prism';
 
 import { clike } from './clike';
 
 const source = util.clone(clike);
 
-export const javascript: GrammarRest = {
+export const javascript = {
   'hashbang': {
     pattern: /^#!.*/,
     greedy: true,
@@ -28,7 +26,6 @@ export const javascript: GrammarRest = {
             pattern: /^\$\{|\}$/,
             alias: 'punctuation'
           },
-          // rest: Prism.languages.javascript
         }
       },
       'string': /[\s\S]+/
@@ -137,3 +134,5 @@ export const javascript: GrammarRest = {
   },
   'operator': /--|\+\+|\*\*=?|=>|&&=?|\|\|=?|[!=]==|<<=?|>>>?=?|[-+*/%&|^!=<>]=?|\.{3}|\?\?=?|\?\.?|[~:]/
 };
+
+javascript['template-string'].inside.interpolation.inside.rest = javascript;

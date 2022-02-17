@@ -1,10 +1,7 @@
-import jsTokens, { Token } from 'js-tokens';
+import type { Editor } from './editor';
 import { tokenize } from './lexer/prism';
 import { typescript } from './lexer/languages/typescript';
-
-import { KEYWORDS, RENDER_HIDDEN, RESERVED_KEYWORDS, THEME } from './constants';
-import type { Editor } from './editor';
-import { normalizeTokens } from './lexer/normalize-tokens';
+import { Token, normalizeTokens } from './lexer/normalize-tokens';
 
 export interface ModelSelection {
   start: {
@@ -19,7 +16,7 @@ export interface ModelSelection {
 
 export class Model {
   public gutterWidth = 50;
-  private cachedTokens: Iterable<Token> = [];
+  private cachedTokens: Token[][] = [];
   private key?: string;
 
   private cacheLineGuide = 0;
@@ -49,21 +46,14 @@ export class Model {
       return this.cachedTokens;
     }
 
-    // this.key = key;
+    this.key = key;
 
-    console.time('tokenize')
     const rawTokens = tokenize(key, typescript) as any;
-    console.timeEnd('tokenize')
-    console.time('normalize')
-    const tokens = normalizeTokens(rawTokens);
-    console.timeEnd('normalize')
-    // console.log((tokenize(key, javascript)));
-
-    return (this.cachedTokens = jsTokens(key));
+    return this.cachedTokens = normalizeTokens(rawTokens);
   }
 
   public render(editor: Editor) {
-    const { ctx, font, input, scroll, modelPlugins, letterWidth } = editor;
+    const { ctx, font, input, scroll, modelPlugins, letterWidth, theme } = editor;
 
     const startX = this.selections[0].start.x;
     const startY = this.selections[0].start.y;
@@ -75,9 +65,6 @@ export class Model {
 
     input.style.transform = `translate(${inputX}px, ${inputY - scroll}px)`;
 
-    let col = 0;
-    let row = 0;
-
     function resetFontOptions() {
       ctx.font = fontFamily;
       ctx.textAlign = 'left';
@@ -88,13 +75,18 @@ export class Model {
 
     const plugins = modelPlugins.map((fn) => fn(editor)).filter(Boolean);
 
-    for (const token of this.tokens) {
-      if (col === 0 && row > 0) {
+    for (const rowRaw in this.tokens) {
+      const row = parseInt(rowRaw);
+      // @TODO: Normalize this beforehand.
+      const tokens = this.tokens[row].filter((t) => !t.empty && !!t.content);
+      let col = 0;
+
+      if (row > 0) {
         ctx.translate(0, font.lineHeight);
       }
 
-      if (col === 0 && this.selections.length > 0) {
-        ctx.fillStyle = THEME.SELECTION;
+      if (this.selections.length > 0) {
+        ctx.fillStyle = theme.selection;
 
         for (const { start, end } of this.selections) {
           if (!end) {
@@ -123,156 +115,69 @@ export class Model {
         }
       }
 
-      if (
-        col === 0 &&
-        token.type !== 'WhiteSpace' &&
-        token.type !== 'LineTerminatorSequence'
-      ) {
+      const firstToken = tokens?.[0];
+      if (firstToken?.content) {
         this.cacheLineGuide = 0;
       }
 
-      if (col === 0 && token.type === 'WhiteSpace') {
-        this.cacheLineGuide = Math.ceil(token.value.length / 2);
+      if (/^[ \t]+/.test(firstToken?.content)) {
+        this.cacheLineGuide = Math.ceil(firstToken.content.replace(/[^ \t].*$/, '').length / 2);
       }
 
-      if (col === 0) {
-        this.renderGuides(editor);
-        this.renderLineNumber(editor, col, row);
+      this.renderGuides(editor);
+      this.renderLineNumber(editor, col, row);
+
+      for (const token of tokens) {
+
+        resetFontOptions();
+
+        // if (token.type === 'LineTerminatorSequence') {
+        //   if (RENDER_HIDDEN) {
+        //     ctx.fillStyle = THEME.HIDDEN;
+        //     ctx.fillText(
+        //       '↵',
+        //       this.gutterWidth + letterWidth * col,
+        //       2
+        //     );
+        //   }
+        //   col = 0;
+        //   row += 1;
+
+        //   continue;
+        // }
+
+        for (const pluginEnd of plugins) {
+          pluginEnd!(token, col, row);
+        }
+
+        const [type] = token.types.slice(-1);
+
+        ctx.fillStyle = theme[type] || theme.plain;
+
+        if (!theme[type]) {
+          console.log(token, type);
+        }
+
+        ctx.textBaseline = 'top';
+        ctx.fillText(
+          token.content,
+          this.gutterWidth + letterWidth * col,
+          2
+        );
+
+        col += token.content.length;
       }
-
-      resetFontOptions();
-
-      if (token.type === 'MultiLineComment') {
-        const lines = token.value.split('\n');
-
-        let sumLines = 0;
-        for (const line of lines) {
-          sumLines++;
-
-          resetFontOptions();
-
-          ctx.fillStyle = THEME.COMMENT;
-          ctx.fillText(
-            line,
-            this.gutterWidth + letterWidth * col,
-            2
-          );
-
-          col += line.length;
-
-          if (sumLines >= lines.length) {
-            continue;
-          }
-
-          if (RENDER_HIDDEN) {
-            ctx.fillStyle = THEME.HIDDEN;
-            ctx.fillText(
-              '↵',
-              this.gutterWidth + letterWidth * col,
-              2
-            );
-          }
-
-          col = 0;
-          row += 1;
-        }
-
-        continue;
-      }
-
-      if (token.type === 'LineTerminatorSequence') {
-        if (RENDER_HIDDEN) {
-          ctx.fillStyle = THEME.HIDDEN;
-          ctx.fillText(
-            '↵',
-            this.gutterWidth + letterWidth * col,
-            2
-          );
-        }
-        col = 0;
-        row += 1;
-
-        continue;
-      }
-
-      for (const pluginEnd of plugins) {
-        pluginEnd!(token, col, row);
-      }
-
-      switch (token.type) {
-        case 'IdentifierName': {
-          const isReserved = RESERVED_KEYWORDS.indexOf(token.value) > -1;
-          if (isReserved) {
-            ctx.fillStyle = THEME.RESERVED;
-            break;
-          }
-
-          const isKeyword = KEYWORDS.indexOf(token.value) > -1;
-          if (isKeyword) {
-            ctx.fillStyle = THEME.KEYWORD;
-            break;
-          }
-
-          ctx.fillStyle = THEME.IDENTIFIER;
-          break;
-        }
-
-        case 'RegularExpressionLiteral': {
-          ctx.fillStyle = THEME.REG_EXP;
-          break;
-        }
-
-        case 'Punctuator': {
-          ctx.fillStyle = THEME.PUNCTUATION;
-          break;
-        }
-
-        case 'SingleLineComment': {
-          ctx.fillStyle = THEME.COMMENT;
-          break;
-        }
-
-        case 'NumericLiteral': {
-          ctx.fillStyle = THEME.NUMBER;
-          break;
-        }
-
-        case 'TemplateTail':
-        case 'TemplateHead': {
-          ctx.fillStyle = THEME.STRING;
-          break;
-        }
-
-        case 'StringLiteral': {
-          ctx.fillStyle = THEME.STRING;
-          break;
-        }
-
-        default: {
-          ctx.fillStyle = THEME.DEFAULT;
-          break;
-        }
-      }
-
-      ctx.textBaseline = 'top';
-      ctx.fillText(
-        token.value,
-        this.gutterWidth + letterWidth * col,
-        2
-      );
-
-      col += token.value.length;
     }
   }
 
   public renderLineNumber(
-    { ctx, font, letterWidth }: Editor,
+    { ctx, font, letterWidth, theme }: Editor,
     col: number,
     row: number
   ) {
     const lineNumber = (row + 1).toString();
 
-    ctx.fillStyle = THEME.PUNCTUATION;
+    ctx.fillStyle = theme.punctuation;
     ctx.font = `${font.size * 0.9}px ${font.family}`;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'top';
@@ -292,12 +197,12 @@ export class Model {
     );
   }
 
-  public renderGuides({ ctx, font, letterWidth }: Editor) {
+  public renderGuides({ ctx, font, letterWidth, theme }: Editor) {
     if (!this.cacheLineGuide) {
       return;
     }
 
-    ctx.fillStyle = THEME.GUIDE;
+    ctx.fillStyle = theme.guide;
 
     for (let i = 0; i < this.cacheLineGuide; i++) {
       ctx.fillRect(

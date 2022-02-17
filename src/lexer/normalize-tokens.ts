@@ -1,5 +1,10 @@
-// @ts-nocheck
-import type { Token } from 'prismjs';
+import type { Token as PrismToken } from 'prismjs';
+
+export type Token = {
+  types: string[];
+  content: string;
+  empty?: boolean;
+};
 
 const newlineRe = /\r\n|\r|\n/;
 
@@ -8,11 +13,10 @@ const normalizeEmptyLines = (line: Token[]) => {
   if (line.length === 0) {
     line.push({
       types: ['plain'],
-      content: '\n',
+      content: '',
       empty: true,
     });
   } else if (line.length === 1 && line[0].content === '') {
-    line[0].content = '\n';
     line[0].empty = true;
   }
 };
@@ -29,10 +33,10 @@ const appendTypes = (types: string[], add: string[] | string): string[] => {
 // Takes an array of Prism's tokens and groups them by line, turning plain
 // strings into tokens as well. Tokens can become recursive in some cases,
 // which means that their types are concatenated. Plain-string tokens however
-// are always of type 'plain'.
+// are always of type "plain".
 // This is not recursive to avoid exceeding the call-stack limit, since it's unclear
 // how nested Prism's tokens can become
-export const normalizeTokens = (tokens: Array<Token | string>): Token[][] => {
+export const normalizeTokens = (tokens: Array<PrismToken | string>): Token[][] => {
   const typeArrStack: string[][] = [[]];
   const tokenArrStack = [tokens];
   const tokenArrIndexStack = [0];
@@ -40,7 +44,7 @@ export const normalizeTokens = (tokens: Array<Token | string>): Token[][] => {
 
   let i = 0;
   let stackIndex = 0;
-  let currentLine = [];
+  let currentLine: Array<{ types: string[]; content: string }> = [];
 
   const acc = [currentLine];
 
@@ -71,7 +75,7 @@ export const normalizeTokens = (tokens: Array<Token | string>): Token[][] => {
       if (typeof content !== 'string') {
         stackIndex++;
         typeArrStack.push(types);
-        tokenArrStack.push(content);
+        tokenArrStack.push(content as any);
         tokenArrIndexStack.push(0);
         tokenArrSizeStack.push(content.length);
         continue;
@@ -84,10 +88,10 @@ export const normalizeTokens = (tokens: Array<Token | string>): Token[][] => {
       currentLine.push({ types, content: splitByNewlines[0] });
 
       // Create a new line for each string on a new line
-      for (let i = 1; i < newlineCount; i++) {
+      for (let j = 1; j < newlineCount; j++) {
         normalizeEmptyLines(currentLine);
         acc.push((currentLine = []));
-        currentLine.push({ types, content: splitByNewlines[i] });
+        currentLine.push({ types, content: splitByNewlines[j] });
       }
     }
 

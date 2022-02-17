@@ -1,4 +1,4 @@
-import type { Token } from 'js-tokens';
+import type { Token } from '../lexer/normalize-tokens';
 import type { Editor } from '../editor';
 
 export interface EditorPluginConfig {

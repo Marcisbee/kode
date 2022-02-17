@@ -1,11 +1,10 @@
-import { THEME } from './constants';
 import type { Editor } from './editor';
 
-export function createInput({ canvas, font }: Editor) {
+export function createInput({ canvas, font, theme }: Editor) {
   const i = document.createElement('input');
   const s = i.style;
 
-  s.background = THEME.CARET;
+  s.background = theme.caret;
   s.height = `${font.lineHeight}px`;
   s.font = `${font.lineHeight}px ${font.family}`;
 

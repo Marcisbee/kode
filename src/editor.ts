@@ -1,4 +1,3 @@
-import { THEME } from './constants';
 import { Model, ModelSelection } from './model';
 import { autoClosePlugin } from './plugins/auto-close';
 import { footerPlugin } from './plugins/footer';
@@ -13,6 +12,7 @@ import type {
   InputPlugin,
   ModelPlugin,
 } from './plugins/types';
+import { AtomOneDark } from './themes/atom-one-dark';
 import { createInput, measureText } from './utils';
 
 interface EditorFontConfig {
@@ -40,6 +40,7 @@ export class Editor {
   constructor(
     public canvas: HTMLCanvasElement,
     public model = new Model(['']),
+    public theme: Record<string, string> = AtomOneDark,
     public plugins: EditorPluginConfig[] = [
       selectedLinePlugin(),
       footerPlugin(),
@@ -230,7 +231,7 @@ export class Editor {
     const { ctx, realCtx, editorPlugins, model, canvas, offScreenCanvas } =
       this;
 
-    ctx.fillStyle = THEME.BG;
+    ctx.fillStyle = this.theme.bg;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctx.save();

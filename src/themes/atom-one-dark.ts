@@ -1,0 +1,23 @@
+export const AtomOneDark: Record<string, string> = {
+  bg: '#282c34',
+  plain: '#cbd1db',
+  interpolation: '#cbd1db',
+  caret: 'orange',
+  hidden: '#333',
+  punctuation: '#888',
+  keyword: '#c678dd',
+  function: '#61afef',
+  operator: '#56b6c2',
+  number: '#d19a66',
+  string: '#98c379',
+  comment: '#5c6370',
+  builtin: '#e06c75',
+  constant: '#d19a66',
+  boolean: '#d19a66',
+  'class-name': '#61afef',
+
+  guide: 'rgba(255,255,255,0.1)',
+  selection: 'rgba(255,255,255,0.2)',
+  'selected-line': 'rgba(255,255,255,0.05)',
+  'match-identifier': 'rgba(255,255,255,0.2)',
+};
