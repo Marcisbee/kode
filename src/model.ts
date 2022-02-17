@@ -73,8 +73,6 @@ export class Model {
 
     for (const rowRaw in this.tokens) {
       const row = parseInt(rowRaw);
-      // @TODO: Normalize this beforehand.
-      const tokens = this.tokens[row].filter((t) => !t.empty && !!t.content);
       let col = 0;
 
       if (row > 0) {
@@ -114,6 +112,9 @@ export class Model {
           }
         }
       }
+
+      // @TODO: Normalize this beforehand.
+      const tokens = this.tokens[row].filter((t) => !t.empty && !!t.content);
 
       const firstToken = tokens?.[0];
       if (firstToken?.content) {
