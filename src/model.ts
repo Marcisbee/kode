@@ -2,6 +2,7 @@ import type { Editor } from './editor';
 import { tokenize } from './lexer/prism';
 import { typescript } from './lexer/languages/typescript';
 import { Token, normalizeTokens } from './lexer/normalize-tokens';
+import { typecheck } from './lsp/typescript';
 
 export interface ModelSelection {
   start: {
@@ -14,7 +15,28 @@ export interface ModelSelection {
   }
 }
 
+export interface ModelDiagnostic {
+  /**
+   * 0 = Error:
+   * 1 = Warning:
+   * 2 = Message:
+   * 3 = Suggestion:
+   */
+  category: 0 | 1 | 2 | 3;
+  code: number;
+  message: string;
+  start: {
+    x: number;
+    y: number;
+  };
+  end?: {
+    x: number;
+    y: number;
+  };
+}
+
 export class Model {
+  public diagnostics: ModelDiagnostic[] = [];
   public gutterWidth = 50;
   private tokens: Token[][] = [];
   private cachedLineGuide = 0;
@@ -163,6 +185,36 @@ export class Model {
           console.log('unhandled', token, type);
         }
       }
+
+      if (this.diagnostics.length > 0) {
+        ctx.fillStyle = 'orangered';
+
+        for (const { start, end } of this.diagnostics) {
+          if (!end) {
+            continue;
+          }
+
+          if (start.y === row && end.y === row) {
+            this.renderDiagnostic(editor, start.x, (end?.x || start.x) - start.x);
+            continue;
+          }
+
+          if (start.y === row && end.y > row) {
+            this.renderDiagnostic(editor, start.x, this.text[row].length - start.x);
+            continue;
+          }
+
+          if (start.y <= row && end.y > row) {
+            this.renderDiagnostic(editor, 0, Math.max(1, this.text[row].length));
+            continue;
+          }
+
+          if (start.y < row && end.y === row) {
+            this.renderDiagnostic(editor, 0, Math.min(end?.x || 0, this.text[row].length));
+            continue;
+          }
+        }
+      }
     }
   }
 
@@ -181,6 +233,15 @@ export class Model {
       lineNumber,
       this.gutterWidth - 20 + letterWidth * col,
       3 + font.lineHeight * 0
+    );
+  }
+
+  public renderDiagnostic({ ctx, font, letterWidth }: Editor, start: number, end: number) {
+    ctx.fillRect(
+      this.gutterWidth + letterWidth * start,
+      font.lineHeight - 4,
+      letterWidth * end,
+      2
     );
   }
 
@@ -211,11 +272,40 @@ export class Model {
   }
 
   private updateTokens() {
-    const key = this.text.join('\n');
-    const rawTokens = tokenize(key, typescript) as any;
+    const code = this.text.join('\n');
+    const rawTokens = tokenize(code, typescript) as any;
 
     this.tokens = normalizeTokens(rawTokens)
       // @TODO: Normalize this beforehand.
       .map((row) => row.filter((t) => !t.empty && !!t.content));
+
+    console.time('typecheck');
+    const errors = code ? typecheck(code) : [];
+    console.timeEnd('typecheck');
+
+    this.diagnostics = errors
+      .map((e) => {
+        const textBefore = code.substring(0, e.start || 0);
+        const linesBeforeEnd = textBefore.split('\n');
+        const textAfter = code.substring(0, (e.start || 0) + (e.length || 0));
+        const linesAfterEnd = textAfter.split('\n');
+
+        return ({
+          category: e.category as any,
+          code: e.code,
+          message: e.messageText as string,
+          start: {
+            y: linesBeforeEnd.length - 1,
+            x: (linesBeforeEnd[linesBeforeEnd.length - 1].length || 0),
+          },
+          end: {
+            y: linesAfterEnd.length - 1,
+            x: (linesAfterEnd[linesAfterEnd.length - 1].length || 0),
+          },
+        });
+      });
+
+    // console.log(errors);
+    // console.log(this.diagnostics);
   }
 }
