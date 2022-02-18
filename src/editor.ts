@@ -88,7 +88,23 @@ export class Editor {
     window.addEventListener('resize', this.onResize, false);
     window.addEventListener('orientationchange', this.onResize, false);
 
-    this.canvas.addEventListener('mousewheel', this.onWheel, false);
+    function debounceRaf(fn: (e: Event) => void) {
+      let timeout: number;
+
+      return (e: Event) => {
+        e.preventDefault();
+
+        // If there's a timer, cancel it
+        if (timeout) {
+          window.cancelAnimationFrame(timeout);
+        }
+
+        // Setup the new requestAnimationFrame()
+        timeout = window.requestAnimationFrame(() => fn(e));
+      }
+    }
+
+    this.canvas.addEventListener('mousewheel', debounceRaf(this.onWheel), false);
     this.canvas.addEventListener('mousedown', this.onMouseDown, false);
 
     this.onResize();
@@ -132,10 +148,6 @@ export class Editor {
   };
 
   private onWheel = (e: any) => {
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-
     const previousScroll = this.scroll;
     const scrollLimit = (this.model.text.length - 1) * this.font.lineHeight;
 

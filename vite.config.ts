@@ -10,7 +10,4 @@ export default defineConfig({
       fileName: (format) => `kode.${format}.js`,
     },
   },
-  // esbuild: {
-  //   mangleProps: /CARET|MATCH_IDENTIFIER_BG|SELECTED_LINE_BG|HIDDEN|COMMENT|RESERVED|KEYWORD|IDENTIFIER|REG_EXP|PUNCTUATION|NUMBER|STRING|DEFAULT/,
-  // },
 });
