@@ -25,9 +25,7 @@ export function footerPlugin(): EditorPluginConfig {
           selections.push(`${y}:${x}`);
         }
 
-        const errors = model.diagnostics.map((e) => `(${e.start.y}:${e.start.x} - ${e.end?.y}:${e.end?.x}) ${e.message}`)
-
-        stats.textContent = `${selections.join(' | ')} | rendered in ${(t1 - t0).toFixed(2)}ms | ${errors.length > 0 ? errors.join(' | ') : 'no issues'}`;
+        stats.textContent = `${selections.join(' | ')} | rendered in ${(t1 - t0).toFixed(2)}ms | ${model.diagnostics.length} issues`;
       };
     },
   };

@@ -37,6 +37,8 @@ export class Editor {
   public ctx = this.offScreenCanvas.getContext('2d')!;
 
   public letterWidth: number;
+  public readonly height!: number;
+  public readonly width!: number;
 
   constructor(
     public canvas: HTMLCanvasElement,
@@ -86,7 +88,7 @@ export class Editor {
     window.addEventListener('resize', this.onResize, false);
     window.addEventListener('orientationchange', this.onResize, false);
 
-    this.canvas.addEventListener('mousewheel', this.onWheel);
+    this.canvas.addEventListener('mousewheel', this.onWheel, false);
     this.canvas.addEventListener('mousedown', this.onMouseDown, false);
 
     this.onResize();
@@ -97,6 +99,9 @@ export class Editor {
     const h = window.innerHeight;
     const wRatio = w * devicePixelRatio;
     const hRatio = h * devicePixelRatio;
+
+    (this.width as any) = w;
+    (this.height as any) = h;
 
     this.canvas.width = wRatio;
     this.canvas.height = hRatio;

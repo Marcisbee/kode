@@ -15,9 +15,11 @@ export const AtomOneDark: Record<string, string> = {
   constant: '#d19a66',
   boolean: '#d19a66',
   'class-name': '#61afef',
+  scrollbar: 'rgba(255,255,255,0.2)',
+  diagnosticError: 'orangered',
 
   guide: 'rgba(255,255,255,0.1)',
-  selection: 'rgba(255,255,255,0.2)',
+  selection: 'rgba(100,200,255,0.4)',
   'selected-line': 'rgba(255,255,255,0.05)',
   'match-identifier': 'rgba(255,255,255,0.2)',
 };

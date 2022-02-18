@@ -66,7 +66,7 @@ export class Model {
   }
 
   public render(editor: Editor) {
-    const { canvas, ctx, font, input, scroll, modelPlugins, letterWidth, theme } = editor;
+    const { height, ctx, font, input, scroll, modelPlugins, letterWidth, theme } = editor;
 
     const startX = this.selections[0].start.x;
     const startY = this.selections[0].start.y;
@@ -90,7 +90,7 @@ export class Model {
 
     const visibleLines = [
       Math.floor(scroll / font.lineHeight),
-      Math.floor((canvas.height + scroll) / font.lineHeight),
+      Math.floor((height + scroll) / font.lineHeight),
     ]
 
     for (const rowRaw in this.tokens) {
@@ -149,6 +149,36 @@ export class Model {
       this.renderGuides(editor);
       this.renderLineNumber(editor, col, row);
 
+      const diagnosticErrors = this.diagnostics.filter((e) => e.category === 1);
+
+      ctx.fillStyle = 'rgba(255,50,50,0.2)';
+
+      for (const { start, end } of diagnosticErrors) {
+        if (!end) {
+          continue;
+        }
+
+        if (start.y === row && end.y === row) {
+          this.renderDiagnosticBackground(editor);
+          continue;
+        }
+
+        if (start.y === row && end.y > row) {
+          this.renderDiagnosticBackground(editor);
+          continue;
+        }
+
+        if (start.y <= row && end.y > row) {
+          this.renderDiagnosticBackground(editor);
+          continue;
+        }
+
+        if (start.y < row && end.y === row) {
+          this.renderDiagnosticBackground(editor);
+          continue;
+        }
+      }
+
       for (const token of tokens) {
         // if (token.type === 'LineTerminatorSequence') {
         //   if (RENDER_HIDDEN) {
@@ -186,33 +216,31 @@ export class Model {
         }
       }
 
-      if (this.diagnostics.length > 0) {
-        ctx.fillStyle = 'orangered';
+      ctx.fillStyle = theme.diagnosticError;
 
-        for (const { start, end } of this.diagnostics) {
-          if (!end) {
-            continue;
-          }
+      for (const { message, start, end } of diagnosticErrors) {
+        if (!end) {
+          continue;
+        }
 
-          if (start.y === row && end.y === row) {
-            this.renderDiagnostic(editor, start.x, (end?.x || start.x) - start.x);
-            continue;
-          }
+        if (start.y === row && end.y === row) {
+          this.renderDiagnostic(editor, message, row, start.x, (end?.x || start.x) - start.x);
+          continue;
+        }
 
-          if (start.y === row && end.y > row) {
-            this.renderDiagnostic(editor, start.x, this.text[row].length - start.x);
-            continue;
-          }
+        if (start.y === row && end.y > row) {
+          this.renderDiagnostic(editor, message, row, start.x, this.text[row].length - start.x);
+          continue;
+        }
 
-          if (start.y <= row && end.y > row) {
-            this.renderDiagnostic(editor, 0, Math.max(1, this.text[row].length));
-            continue;
-          }
+        if (start.y <= row && end.y > row) {
+          this.renderDiagnostic(editor, message, row, 0, Math.max(1, this.text[row].length));
+          continue;
+        }
 
-          if (start.y < row && end.y === row) {
-            this.renderDiagnostic(editor, 0, Math.min(end?.x || 0, this.text[row].length));
-            continue;
-          }
+        if (start.y < row && end.y === row) {
+          this.renderDiagnostic(editor, message, row, 0, Math.min(end?.x || 0, this.text[row].length));
+          continue;
         }
       }
     }
@@ -236,12 +264,26 @@ export class Model {
     );
   }
 
-  public renderDiagnostic({ ctx, font, letterWidth }: Editor, start: number, end: number) {
+  public renderDiagnosticBackground({ ctx, width, font }: Editor) {
+    ctx.fillRect(
+      0,
+      -2,
+      width,
+      font.lineHeight
+    );
+  }
+
+  public renderDiagnostic({ ctx, font, letterWidth }: Editor, message: string, line: number, start: number, end: number) {
     ctx.fillRect(
       this.gutterWidth + letterWidth * start,
       font.lineHeight - 4,
       letterWidth * end,
       2
+    );
+    ctx.fillText(
+      message,
+      this.gutterWidth + (this.text[line].length + 5) * letterWidth,
+      2,
     );
   }
 
@@ -279,9 +321,7 @@ export class Model {
       // @TODO: Normalize this beforehand.
       .map((row) => row.filter((t) => !t.empty && !!t.content));
 
-    console.time('typecheck');
     const errors = code ? typecheck(code) : [];
-    console.timeEnd('typecheck');
 
     this.diagnostics = errors
       .map((e) => {
@@ -304,8 +344,5 @@ export class Model {
           },
         });
       });
-
-    // console.log(errors);
-    // console.log(this.diagnostics);
   }
 }
