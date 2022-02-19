@@ -147,7 +147,6 @@ export class Model {
       }
 
       this.renderGuides(editor);
-      this.renderLineNumber(editor, col, row);
 
       const diagnosticErrors = this.diagnostics.filter((e) => e.category === 1);
 
@@ -178,6 +177,8 @@ export class Model {
           continue;
         }
       }
+
+      this.renderLineNumber(editor, col, row);
 
       for (const token of tokens) {
         // if (token.type === 'LineTerminatorSequence') {
