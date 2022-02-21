@@ -2,6 +2,7 @@ import type { Editor, EditorTokenator } from './editor';
 import { tokenize } from './lexer/prism';
 import { typescript } from './lexer/languages/typescript';
 import { Token, normalizeTokens } from './lexer/normalize-tokens';
+import { getLinePosition } from './utils';
 // import { typecheck } from './lsp/typescript';
 
 export interface ModelSelection {
@@ -39,6 +40,7 @@ export class Line {
   constructor(
     public row: number,
     public tokens: Token[],
+    public height: number,
   ) { }
 }
 
@@ -46,6 +48,7 @@ export class LinesShrink {
   constructor(
     public row: number,
     public tokens: Token[][],
+    public height: number,
   ) { }
 }
 
@@ -79,10 +82,7 @@ export class Model {
     this.updateTokens();
   }
 
-  public render(
-    editor: Editor,
-    tokenator: EditorTokenator,
-  ) {
+  public render(editor: Editor) {
     const { state, ctx, font, input, scroll, modelPlugins, letterWidth, theme } = editor;
 
     const startX = this.selections[0].start.x;
@@ -91,9 +91,9 @@ export class Model {
     const inputX =
       this.gutterWidth +
       Math.min(startX, this.text[startY].length) * letterWidth;
-    const inputY = startY * font.lineHeight;
+    const inputY = getLinePosition(state, startY);
 
-    input.style.transform = `translate(${inputX}px, ${inputY - scroll}px)`;
+    input.style.transform = `translate(${inputX}px, ${(inputY?.y || 0) - scroll}px)`;
 
     function resetFontOptions() {
       ctx.font = fontFamily;
@@ -103,13 +103,7 @@ export class Model {
 
     this.cachedLineGuide = 0;
 
-    // state.linesSkipped = 0;
-    // state.offsetAdded = 0;
-
     const plugins = modelPlugins.map((fn) => fn(editor)).filter(Boolean);
-
-    console.log('render');
-    console.log(state);
 
     let foldedLines: [number, number][] = [];
     if (state.autoFoldLines > 0) {
@@ -150,186 +144,191 @@ export class Model {
 
       if (lastWasSkippedLine) {
         // @TODO: Push all shrinked lines
-        state.lines.push(new LinesShrink(row, []));
+        state.lines.push(new LinesShrink(row, [], font.lineHeight * 1.5));
       }
 
-      state.lines.push(new Line(row, line));
+      state.lines.push(new Line(row, line, font.lineHeight));
     }
 
     // for (const { row } of tokenator(this.tokens)) {
     for (const line of state.lines) {
-      console.log({ line });
+      const { row } = line;
+      let col = 0;
+
+      const shouldRender = state.height + line.height > scroll;
+
+      if (shouldRender && state.height > scroll + editor.height) {
+        break;
+      }
+
       if (line instanceof LinesShrink) {
-        const lineHeight = font.lineHeight * 1.5;
+        if (shouldRender) {
+          ctx.fillStyle = 'rgba(0,0,0,0.15)';
+          ctx.fillRect(
+            0,
+            -2,
+            editor.width,
+            line.height,
+          );
 
-        ctx.fillStyle = 'rgba(0,0,0,0.15)';
-        ctx.fillRect(
-          0,
-          -2,
-          editor.width,
-          lineHeight,
-        );
+          ctx.fillStyle = theme.punctuation;
+          ctx.fillText(
+            '...',
+            50 + 30,
+            0,
+          );
+        }
 
-        ctx.fillStyle = theme.punctuation;
-        ctx.fillText(
-          '...',
-          50 + 30,
-          0,
-        );
-
-        ctx.translate(0, lineHeight);
-        state.height += lineHeight;
+        ctx.translate(0, line.height);
+        state.height += line.height;
 
         continue;
       }
 
-      const { row } = line;
-      let col = 0;
+      if (shouldRender) {
+        if (this.selections.length > 0) {
+          ctx.fillStyle = theme.selection;
 
-      if (this.selections.length > 0) {
-        ctx.fillStyle = theme.selection;
+          for (const { start, end } of this.selections) {
+            if (!end) {
+              continue;
+            }
 
-        for (const { start, end } of this.selections) {
+            if (start.y === row && end.y === row) {
+              this.renderSelections(editor, start.x, (end?.x || start.x) - start.x);
+              continue;
+            }
+
+            if (start.y === row && end.y > row) {
+              this.renderSelections(editor, start.x, this.text[row].length - start.x);
+              continue;
+            }
+
+            if (start.y <= row && end.y > row) {
+              this.renderSelections(editor, 0, Math.max(1, this.text[row].length));
+              continue;
+            }
+
+            if (start.y < row && end.y === row) {
+              this.renderSelections(editor, 0, Math.min(end?.x || 0, this.text[row].length));
+              continue;
+            }
+          }
+        }
+
+        const tokens = this.tokens[row];
+
+        const firstToken = tokens?.[0];
+        if (firstToken?.content) {
+          this.cachedLineGuide = 0;
+        }
+
+        if (/^[ \t]+/.test(firstToken?.content)) {
+          this.cachedLineGuide = Math.ceil(firstToken.content.replace(/[^ \t].*$/, '').length / 2);
+        }
+
+        this.renderGuides(editor);
+
+        const diagnosticErrors = this.diagnostics.filter((e) => e.category === 1);
+
+        ctx.fillStyle = 'rgba(255,50,50,0.2)';
+
+        for (const { start, end } of diagnosticErrors) {
           if (!end) {
             continue;
           }
 
           if (start.y === row && end.y === row) {
-            this.renderSelections(editor, start.x, (end?.x || start.x) - start.x);
+            this.renderDiagnosticBackground(editor);
             continue;
           }
 
           if (start.y === row && end.y > row) {
-            this.renderSelections(editor, start.x, this.text[row].length - start.x);
+            this.renderDiagnosticBackground(editor);
             continue;
           }
 
           if (start.y <= row && end.y > row) {
-            this.renderSelections(editor, 0, Math.max(1, this.text[row].length));
+            this.renderDiagnosticBackground(editor);
             continue;
           }
 
           if (start.y < row && end.y === row) {
-            this.renderSelections(editor, 0, Math.min(end?.x || 0, this.text[row].length));
+            this.renderDiagnosticBackground(editor);
+            continue;
+          }
+        }
+
+        this.renderLineNumber(editor, col, row);
+
+        for (const token of tokens) {
+          // if (token.type === 'LineTerminatorSequence') {
+          //   if (RENDER_HIDDEN) {
+          //     ctx.fillStyle = THEME.HIDDEN;
+          //     ctx.fillText(
+          //       '↵',
+          //       this.gutterWidth + letterWidth * col,
+          //       2
+          //     );
+          //   }
+          //   col = 0;
+          //   row += 1;
+
+          //   continue;
+          // }
+
+          for (const pluginEnd of plugins) {
+            pluginEnd!(token, col, row);
+          }
+
+          const [type] = token.types.slice(-1);
+
+          resetFontOptions();
+          ctx.fillStyle = theme[type] || theme.plain;
+          ctx.fillText(
+            token.content,
+            this.gutterWidth + letterWidth * col,
+            2
+          );
+
+          col += token.content.length;
+
+          if (!theme[type]) {
+            console.log('unhandled', token, type);
+          }
+        }
+
+        ctx.fillStyle = theme.diagnosticError;
+
+        for (const { message, start, end } of diagnosticErrors) {
+          if (!end) {
+            continue;
+          }
+
+          if (start.y === row && end.y === row) {
+            this.renderDiagnostic(editor, message, row, start.x, (end?.x || start.x) - start.x);
+            continue;
+          }
+
+          if (start.y === row && end.y > row) {
+            this.renderDiagnostic(editor, message, row, start.x, this.text[row].length - start.x);
+            continue;
+          }
+
+          if (start.y <= row && end.y > row) {
+            this.renderDiagnostic(editor, message, row, 0, Math.max(1, this.text[row].length));
+            continue;
+          }
+
+          if (start.y < row && end.y === row) {
+            this.renderDiagnostic(editor, message, row, 0, Math.min(end?.x || 0, this.text[row].length));
             continue;
           }
         }
       }
 
-      const tokens = this.tokens[row];
-
-      const firstToken = tokens?.[0];
-      if (firstToken?.content) {
-        this.cachedLineGuide = 0;
-      }
-
-      if (/^[ \t]+/.test(firstToken?.content)) {
-        this.cachedLineGuide = Math.ceil(firstToken.content.replace(/[^ \t].*$/, '').length / 2);
-      }
-
-      this.renderGuides(editor);
-
-      const diagnosticErrors = this.diagnostics.filter((e) => e.category === 1);
-
-      ctx.fillStyle = 'rgba(255,50,50,0.2)';
-
-      for (const { start, end } of diagnosticErrors) {
-        if (!end) {
-          continue;
-        }
-
-        if (start.y === row && end.y === row) {
-          this.renderDiagnosticBackground(editor);
-          continue;
-        }
-
-        if (start.y === row && end.y > row) {
-          this.renderDiagnosticBackground(editor);
-          continue;
-        }
-
-        if (start.y <= row && end.y > row) {
-          this.renderDiagnosticBackground(editor);
-          continue;
-        }
-
-        if (start.y < row && end.y === row) {
-          this.renderDiagnosticBackground(editor);
-          continue;
-        }
-      }
-
-      this.renderLineNumber(editor, col, row);
-
-      for (const token of tokens) {
-        // if (token.type === 'LineTerminatorSequence') {
-        //   if (RENDER_HIDDEN) {
-        //     ctx.fillStyle = THEME.HIDDEN;
-        //     ctx.fillText(
-        //       '↵',
-        //       this.gutterWidth + letterWidth * col,
-        //       2
-        //     );
-        //   }
-        //   col = 0;
-        //   row += 1;
-
-        //   continue;
-        // }
-
-        for (const pluginEnd of plugins) {
-          pluginEnd!(token, col, row);
-        }
-
-        const [type] = token.types.slice(-1);
-
-        resetFontOptions();
-        ctx.fillStyle = theme[type] || theme.plain;
-        ctx.fillText(
-          token.content,
-          this.gutterWidth + letterWidth * col,
-          2
-        );
-
-        col += token.content.length;
-
-        if (!theme[type]) {
-          console.log('unhandled', token, type);
-        }
-      }
-
-      ctx.fillStyle = theme.diagnosticError;
-
-      for (const { message, start, end } of diagnosticErrors) {
-        if (!end) {
-          continue;
-        }
-
-        if (start.y === row && end.y === row) {
-          this.renderDiagnostic(editor, message, row, start.x, (end?.x || start.x) - start.x);
-          continue;
-        }
-
-        if (start.y === row && end.y > row) {
-          this.renderDiagnostic(editor, message, row, start.x, this.text[row].length - start.x);
-          continue;
-        }
-
-        if (start.y <= row && end.y > row) {
-          this.renderDiagnostic(editor, message, row, 0, Math.max(1, this.text[row].length));
-          continue;
-        }
-
-        if (start.y < row && end.y === row) {
-          this.renderDiagnostic(editor, message, row, 0, Math.min(end?.x || 0, this.text[row].length));
-          continue;
-        }
-      }
-
-      const lineHeight = font.lineHeight;
-
-      ctx.translate(0, lineHeight);
-      state.height += lineHeight;
+      ctx.translate(0, line.height);
+      state.height += line.height;
     }
   }
 

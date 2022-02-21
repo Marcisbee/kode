@@ -62,7 +62,7 @@ export function scrollbarPlugin(): EditorPluginConfig {
         roundRect(
           ctx,
           width - barWidth - barMargin,
-          (scrollTop) + barMargin,
+          scrollTop + barMargin,
           barWidth,
           barHeight,
           barWidth / 2,

@@ -15,7 +15,7 @@ import type {
   ModelPlugin,
 } from './plugins/types';
 import { AtomOneDark } from './themes/atom-one-dark';
-import { createInput, measureText } from './utils';
+import { createInput, getRowByTop, measureText } from './utils';
 
 interface EditorFontConfig {
   size: number;
@@ -29,9 +29,6 @@ export interface EditorRenderState {
   autoFoldLines: number;
   height: number;
   lines: (Line | LinesShrink)[],
-  // foldedLines: [number, number][];
-  linesSkipped: number,
-  lastSkipped?: number,
   [key: string]: any;
 };
 
@@ -206,10 +203,13 @@ export class Editor {
     let initialY: number;
 
     const onMouseMove = (e: MouseEvent) => {
-      const y = Math.min(
-        text.length,
-        Math.floor((e.offsetY + this.scroll) / this.font.lineHeight)
-      );
+      const y = getRowByTop(this.state, e.offsetY + this.scroll);
+
+      if (y == null) {
+        console.log('NOTHING TO SELECT');
+        return;
+      }
+
       const x = Math.min(
         text[y]?.length || text[text.length - 1].length,
         Math.max(0, Math.round((e.offsetX - gutterWidth) / this.letterWidth))
@@ -276,15 +276,11 @@ export class Editor {
     this.state = {
       autoFoldLines: 0,
       lines: [],
-      linesSkipped: 0,
-      lastSkipped: undefined,
       height: 0,
     };
   }
 
   public renderModel() {
-    console.log('setup');
-
     const {
       ctx,
       width,
@@ -310,138 +306,7 @@ export class Editor {
 
     state.height = 0;
 
-    const tokenator: EditorTokenator = function* (tokens) {
-      let foldedLines: [number, number][] = [];
-
-      if (state.autoFoldLines > 0) {
-        foldedLines = [
-          // @TODO: Handle empty lines maybe
-          // [17 - 1, 19 - 1],
-          // [23 - 1, 25 - 1],
-          // [25 - 1, 27 - 1],
-          [19 - 1, 23 - 1],
-          [43 - 1, 62 - 1],
-          [62 - 1, 95 - 1],
-          [97 - 1, 120 - 1],
-          [122 - 1, 132 - 1],
-          [134 - 1, 151 - 1],
-          [153 - 1, 227 - 1],
-          [229 - 1, 235 - 1],
-          [237 - 1, 264 - 1],
-        ];
-      }
-
-      const visibleLines = [
-        // 0,
-        // Infinity,
-        Math.floor(scroll / font.lineHeight),
-        Math.floor((height + scroll) / font.lineHeight),
-      ];
-
-      tokenLoop:
-      for (const rowRaw in tokens) {
-        const row = parseInt(rowRaw);
-
-        for (const folds of foldedLines) {
-          if (!(row <= folds[0] || row >= folds[1])) {
-            state.lastSkipped = row;
-            state.linesSkipped++;
-
-            continue tokenLoop;
-          }
-        }
-
-        const lastWasSkippedLine = state.lastSkipped != null && state.lastSkipped + 1 === row;
-
-        if (lastWasSkippedLine) {
-          ctx.translate(0, font.lineHeight);
-          state.height += font.lineHeight;
-        }
-
-        // const rowAdjusted = row - state.linesSkipped + Math.floor(state.offsetAdded / font.lineHeight);
-
-        if (row > 0) {
-          ctx.translate(0, font.lineHeight);
-          state.height += font.lineHeight;
-        }
-
-        // const lastWasSkippedLine = state.lastSkipped != null && state.lastSkipped + 1 === row;
-
-        // if (lastWasSkippedLine) {
-        //   ctx.translate(0, font.lineHeight);
-        //   // state.offsetAdded += font.lineHeight;
-        //   offset += font.lineHeight;
-        // }
-
-        // for (const folds of foldedLines) {
-        //   if (!(row <= folds[0] || row >= folds[1])) {
-        //     state.lastSkipped = row;
-        //     state.linesSkipped++;
-
-        //     ctx.textBaseline = 'top';
-        //     ctx.fillText(
-        //       'asd',
-        //       model.gutterWidth,
-        //       3 + font.lineHeight * 1
-        //     );
-
-        //     // yield {
-        //     //   row,
-        //     //   rowAdjusted,
-        //     //   offset,
-        //     // };
-
-        //     continue tokenLoop;
-        //   }
-        // }
-
-        // if (row > 0) {
-        //   ctx.translate(0, font.lineHeight);
-        // }
-
-        // const rowAdjusted = row - state.linesSkipped + Math.floor(offset / font.lineHeight);
-
-        // @TODO: Make performance lines hidden
-        // if (row < visibleLines[0] || row > visibleLines[1]) {
-        //   continue tokenLoop;
-        // }
-
-        // if (rowAdjusted > visibleLines[1]) {
-        //   break tokenLoop;
-        // }
-
-        if (lastWasSkippedLine) {
-          // ctx.translate(0, font.lineHeight);
-          ctx.fillStyle = 'rgba(0,0,0,0.15)';
-          ctx.fillRect(
-            0,
-            -font.lineHeight - 2,
-            width,
-            font.lineHeight,
-          );
-
-          ctx.fillStyle = theme.punctuation;
-          ctx.fillText(
-            `...`,
-            50 + 30,
-            -font.lineHeight,
-          );
-        }
-
-        console.log('render', row + 1);
-
-        yield {
-          row,
-          // rowAdjusted,
-        };
-      }
-      // yield {
-      //   row: 1,
-      //   offset: 0,
-      // };
-    }
-
-    model.render(this, tokenator);
+    model.render(this);
 
     ctx.restore();
 
