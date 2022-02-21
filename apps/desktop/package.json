@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
+    "prepare": "neu update",
     "build:editor": "node scripts/build",
     "build:neu": "neu build",
     "watch:editor": "node scripts/watch",
