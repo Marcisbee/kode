@@ -1,0 +1,23 @@
+{
+  "name": "kode-desktop",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "desktop:editor": "esbuild --bundle --format=esm --legal-comments=external src/main.ts --minify --outdir=resources/js --watch",
+    "desktop:neu": "neu run",
+    "build:editor": "esbuild --bundle --format=esm --legal-comments=external src/main.ts --minify --outdir=resources/js",
+    "build:neu": "neu build",
+    "desktop": "npm-run-all -p desktop:editor desktop:neu",
+    "build": "npm-run-all -p build:editor build:neu"
+  },
+  "dependencies": {
+    "@neutralinojs/neu": "^9.2.0",
+    "editor": "*",
+    "npm-run-all": "^4.1.5"
+  },
+  "devDependencies": {
+    "config": "*",
+    "tsconfig": "*",
+    "typescript": "^4.5.3"
+  }
+}

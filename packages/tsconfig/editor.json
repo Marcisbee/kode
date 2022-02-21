@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Kode Editor",
+  "extends": "./base.json",
+  "compilerOptions": {
+    "lib": [
+      "ESNext",
+      "DOM"
+    ],
+    "module": "ESNext",
+    "target": "ES6",
+    "useDefineForClassFields": true,
+    "moduleResolution": "Node"
+  },
+  "include": ["src", "app-env.d.ts"],
+  "exclude": ["node_modules"]
+}

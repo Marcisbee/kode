@@ -1,20 +1,25 @@
 {
-  "name": "kode",
+  "name": "kode-shared",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "version": "0.0.0",
   "scripts": {
-    "config": "esbuild --bundle --tree-shaking=true --mangle-props=_$ --reserve-props=^__.*__$ --splitting --chunk-names=chunks/[name] --format=esm --legal-comments=external",
-    "dev": "npm run config -- src/main.ts --sourcemap --servedir=public",
-    "build": "npm run config -- --define:process.env.NODE_ENV=\\\"production\\\" src/kode.ts --minify --drop:console --outdir=dist --analyze",
-    "desktop": "npm run config -- src/main.ts --sourcemap --outdir=resources/js",
-    "preview": "concurrently \"npm run desktop -- --watch\" \"npx @neutralinojs/neu run\"",
-    "make": "npm run desktop -- --define:process.env.NODE_ENV=\\\"production\\\" --minify --drop:console --outdir=resources/js --analyze && npx @neutralinojs/neu build"
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "desktop": "turbo run desktop"
   },
   "devDependencies": {
     "@types/node": "^17.0.18",
-    "@types/prismjs": "^1.26.0",
-    "concurrently": "^7.0.0",
     "esbuild": "^0.14.23",
-    "stats.js": "^0.17.0",
+    "turbo": "^1.1.3",
     "typescript": "^4.5.5"
-  }
+  },
+  "engines": {
+    "npm": ">=7.0.0",
+    "node": ">=14.0.0"
+  },
+  "packageManager": "npm@8.1.0"
 }
