@@ -129,6 +129,7 @@ export class Model {
     state.position = 0;
     state.height = 0;
 
+    // Prepare tokens
     tokenLoop:
     for (const rowRaw in this.tokens) {
       const row = parseInt(rowRaw);
@@ -158,6 +159,7 @@ export class Model {
 
     state.height -= state.lines[state.lines.length - 1].height;
 
+    // Render
     for (const line of state.lines) {
       const { row } = line;
       let col = 0;
