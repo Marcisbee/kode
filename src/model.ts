@@ -35,6 +35,20 @@ export interface ModelDiagnostic {
   };
 }
 
+export class Line {
+  constructor(
+    public row: number,
+    public tokens: Token[],
+  ) { }
+}
+
+export class LinesShrink {
+  constructor(
+    public row: number,
+    public tokens: Token[][],
+  ) { }
+}
+
 export class Model {
   public diagnostics: ModelDiagnostic[] = [];
   public gutterWidth = 50;
@@ -89,15 +103,87 @@ export class Model {
 
     this.cachedLineGuide = 0;
 
-    state.linesSkipped = 0;
-    state.offsetAdded = 0;
+    // state.linesSkipped = 0;
+    // state.offsetAdded = 0;
 
     const plugins = modelPlugins.map((fn) => fn(editor)).filter(Boolean);
 
     console.log('render');
     console.log(state);
 
-    for (const { row } of tokenator(this.tokens)) {
+    let foldedLines: [number, number][] = [];
+    if (state.autoFoldLines > 0) {
+      foldedLines = [
+        // @TODO: Handle empty lines maybe
+        // [17 - 1, 19 - 1],
+        // [23 - 1, 25 - 1],
+        // [25 - 1, 27 - 1],
+        [19 - 1, 23 - 1],
+        [43 - 1, 62 - 1],
+        [62 - 1, 95 - 1],
+        [97 - 1, 120 - 1],
+        [122 - 1, 132 - 1],
+        [134 - 1, 151 - 1],
+        [153 - 1, 227 - 1],
+        [229 - 1, 235 - 1],
+        [237 - 1, 264 - 1],
+      ];
+    }
+    let lastSkipped!: number;
+
+    state.lines = [];
+
+    tokenLoop:
+    for (const rowRaw in this.tokens) {
+      const row = parseInt(rowRaw);
+      const line = this.tokens[row];
+
+      for (const folds of foldedLines) {
+        if (!(row <= folds[0] || row >= folds[1])) {
+          lastSkipped = row;
+
+          continue tokenLoop;
+        }
+      }
+
+      const lastWasSkippedLine = lastSkipped != null && lastSkipped + 1 === row;
+
+      if (lastWasSkippedLine) {
+        // @TODO: Push all shrinked lines
+        state.lines.push(new LinesShrink(row, []));
+      }
+
+      state.lines.push(new Line(row, line));
+    }
+
+    // for (const { row } of tokenator(this.tokens)) {
+    for (const line of state.lines) {
+      console.log({ line });
+      if (line instanceof LinesShrink) {
+        const lineHeight = font.lineHeight * 1.5;
+
+        ctx.fillStyle = 'rgba(0,0,0,0.15)';
+        ctx.fillRect(
+          0,
+          -2,
+          editor.width,
+          lineHeight,
+        );
+
+        ctx.fillStyle = theme.punctuation;
+        ctx.fillText(
+          '...',
+          50 + 30,
+          0,
+        );
+
+        ctx.translate(0, lineHeight);
+        state.height += lineHeight;
+
+        continue;
+      }
+
+      const { row } = line;
       let col = 0;
 
       if (this.selections.length > 0) {
@@ -239,6 +325,11 @@ export class Model {
           continue;
         }
       }
+
+      const lineHeight = font.lineHeight;
+
+      ctx.translate(0, lineHeight);
+      state.height += lineHeight;
     }
   }
 

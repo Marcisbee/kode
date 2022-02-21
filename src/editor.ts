@@ -1,5 +1,5 @@
 import { Token } from './lexer/normalize-tokens';
-import { Model, ModelSelection } from './model';
+import { Line, LinesShrink, Model, ModelSelection } from './model';
 import { autoClosePlugin } from './plugins/auto-close';
 import { footerPlugin } from './plugins/footer';
 import { keyMapPlugin } from './plugins/key-map';
@@ -28,6 +28,7 @@ const devicePixelRatio = window.devicePixelRatio || 1;
 export interface EditorRenderState {
   autoFoldLines: number;
   height: number;
+  lines: (Line | LinesShrink)[],
   // foldedLines: [number, number][];
   linesSkipped: number,
   lastSkipped?: number,
@@ -274,6 +275,7 @@ export class Editor {
   private resetState() {
     this.state = {
       autoFoldLines: 0,
+      lines: [],
       linesSkipped: 0,
       lastSkipped: undefined,
       height: 0,
