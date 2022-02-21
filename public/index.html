@@ -1,21 +1,27 @@
-import {
-  Editor,
-  Model,
-} from './kode';
-import './style.css';
+<!DOCTYPE html>
+<html lang="en">
 
-const canvas = document.querySelector<HTMLCanvasElement>('#canvas')!;
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kodē - Canvas based code editor</title>
+</head>
 
-// const stressTest = new Array(2000).fill(`export class Editor {
-//   public scroll: number = 0;
-//   public input: HTMLInputElement;
+<body>
+  <div id="app">
+    <label>
+      <canvas id="canvas"></canvas>
+    </label>
+  </div>
+  <link rel="stylesheet" href="/style.css" />
+  <script type="module" src="/main.js"></script>
+  <!-- <script type="module">
+    import { Editor, Model } from '/kode.js';
 
-//   public editorPlugins: EditorPlugin[] = [];
-//   public modelPlugins: ModelPlugin[] = [];
-//   public inputPlugins: InputPlugin[] = [];
-// }`).join('\n\n');
+    const canvas = document.querySelector('#canvas');
 
-const model = new Model(`import { Model, ModelSelection } from './model';
+    const model = new Model(`import { Model, ModelSelection } from './model';
 import { autoClosePlugin } from './plugins/auto-close';
 import { footerPlugin } from './plugins/footer';
 import { keyMapPlugin } from './plugins/key-map';
@@ -282,4 +288,8 @@ export class Editor {
 }
 `.split('\n'));
 
-new Editor(canvas, model);
+    new Editor(canvas, model);
+  </script> -->
+</body>
+
+</html>
