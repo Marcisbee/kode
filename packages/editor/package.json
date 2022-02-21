@@ -5,13 +5,12 @@
   "types": "./src/kode.ts",
   "license": "MIT",
   "scripts": {
-    "dev": "esbuild --bundle --format=esm --legal-comments=external src/main.ts --sourcemap --servedir=public",
-    "build": "esbuild --bundle --format=esm --legal-comments=external src/kode.ts --minify --drop:console --outdir=dist --define:process.env.NODE_ENV=\\\"production\\\" --analyze"
+    "dev": "node scripts/watch",
+    "build": "node scripts/build"
   },
   "devDependencies": {
     "@types/prismjs": "^1.26.0",
     "stats.js": "^0.17.0",
-    "tsconfig": "*",
-    "config": "*"
+    "tsconfig": "*"
   }
 }

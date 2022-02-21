@@ -3,11 +3,11 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "desktop:editor": "esbuild --bundle --format=esm --legal-comments=external src/main.ts --minify --outdir=resources/js --watch",
-    "desktop:neu": "neu run",
-    "build:editor": "esbuild --bundle --format=esm --legal-comments=external src/main.ts --minify --outdir=resources/js",
+    "build:editor": "node scripts/build",
     "build:neu": "neu build",
-    "desktop": "npm-run-all -p desktop:editor desktop:neu",
+    "watch:editor": "node scripts/watch",
+    "watch:neu": "neu run",
+    "desktop": "npm-run-all -p watch:editor watch:neu",
     "build": "npm-run-all -p build:editor build:neu"
   },
   "dependencies": {
@@ -16,7 +16,6 @@
     "npm-run-all": "^4.1.5"
   },
   "devDependencies": {
-    "config": "*",
     "tsconfig": "*",
     "typescript": "^4.5.3"
   }
