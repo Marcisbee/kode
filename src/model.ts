@@ -1,4 +1,4 @@
-import type { Editor, EditorTokenator } from './editor';
+import type { Editor } from './editor';
 import { tokenize } from './lexer/prism';
 import { typescript } from './lexer/languages/typescript';
 import { Token, normalizeTokens } from './lexer/normalize-tokens';
@@ -126,6 +126,8 @@ export class Model {
     let lastSkipped!: number;
 
     state.lines = [];
+    state.position = 0;
+    state.height = 0;
 
     tokenLoop:
     for (const rowRaw in this.tokens) {
@@ -144,20 +146,25 @@ export class Model {
 
       if (lastWasSkippedLine) {
         // @TODO: Push all shrinked lines
-        state.lines.push(new LinesShrink(row, [], font.lineHeight * 1.5));
+        const lineHeight = font.lineHeight * 1.5;
+        state.lines.push(new LinesShrink(row, [], lineHeight));
+        state.height += lineHeight;
       }
 
-      state.lines.push(new Line(row, line, font.lineHeight));
+      const lineHeight = font.lineHeight;
+      state.lines.push(new Line(row, line, lineHeight));
+      state.height += lineHeight;
     }
 
-    // for (const { row } of tokenator(this.tokens)) {
+    state.height -= state.lines[state.lines.length - 1].height;
+
     for (const line of state.lines) {
       const { row } = line;
       let col = 0;
 
-      const shouldRender = state.height + line.height > scroll;
+      const shouldRender = state.position + line.height > scroll;
 
-      if (shouldRender && state.height > scroll + editor.height) {
+      if (shouldRender && state.position > scroll + editor.height) {
         break;
       }
 
@@ -180,7 +187,7 @@ export class Model {
         }
 
         ctx.translate(0, line.height);
-        state.height += line.height;
+        state.position += line.height;
 
         continue;
       }
@@ -328,7 +335,7 @@ export class Model {
       }
 
       ctx.translate(0, line.height);
-      state.height += line.height;
+      state.position += line.height;
     }
   }
 

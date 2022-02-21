@@ -1,4 +1,3 @@
-import { Token } from './lexer/normalize-tokens';
 import { Line, LinesShrink, Model, ModelSelection } from './model';
 import { autoClosePlugin } from './plugins/auto-close';
 import { footerPlugin } from './plugins/footer';
@@ -28,18 +27,10 @@ const devicePixelRatio = window.devicePixelRatio || 1;
 export interface EditorRenderState {
   autoFoldLines: number;
   height: number;
+  position: number;
   lines: (Line | LinesShrink)[],
   [key: string]: any;
 };
-
-export interface EditorTokenatorResponse {
-  row: number;
-  rowAdjusted: number;
-}
-
-export interface EditorTokenator {
-  (tokens: Token[][]): Generator<EditorTokenatorResponse>;
-}
 
 export const recommendedPlugins: EditorPluginConfig[] = [
   selectedLinePlugin(),
@@ -276,6 +267,7 @@ export class Editor {
     this.state = {
       autoFoldLines: 0,
       lines: [],
+      position: 0,
       height: 0,
     };
   }
@@ -283,15 +275,10 @@ export class Editor {
   public renderModel() {
     const {
       ctx,
-      width,
-      height,
-      scroll,
       realCtx,
       editorPlugins,
       model,
-      font,
       canvas,
-      theme,
       offScreenCanvas,
     } = this;
 
@@ -302,9 +289,6 @@ export class Editor {
     ctx.translate(0, -this.scroll);
 
     const plugins = editorPlugins.map((fn) => fn(this)).filter(Boolean);
-    const state = this.state;
-
-    state.height = 0;
 
     model.render(this);
 
