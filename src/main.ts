@@ -297,3 +297,11 @@ new Editor(
     ),
   ],
 );
+
+// console.log('asd');
+
+// Neutralino.init();
+
+// Neutralino.events.on('ready', () => {
+//   Neutralino.os.showMessageBox('Welcome', 'Hello Neutralinojs');
+// });
