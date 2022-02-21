@@ -1,3 +1,4 @@
+import { Token } from './lexer/normalize-tokens';
 import { Model, ModelSelection } from './model';
 import { autoClosePlugin } from './plugins/auto-close';
 import { footerPlugin } from './plugins/footer';
@@ -24,6 +25,24 @@ interface EditorFontConfig {
 
 const devicePixelRatio = window.devicePixelRatio || 1;
 
+export interface EditorRenderState {
+  autoFoldLines: number;
+  height: number;
+  // foldedLines: [number, number][];
+  linesSkipped: number,
+  lastSkipped?: number,
+  [key: string]: any;
+};
+
+export interface EditorTokenatorResponse {
+  row: number;
+  rowAdjusted: number;
+}
+
+export interface EditorTokenator {
+  (tokens: Token[][]): Generator<EditorTokenatorResponse>;
+}
+
 export class Editor {
   public scroll: number = 0;
   public input: HTMLInputElement;
@@ -39,6 +58,8 @@ export class Editor {
   public letterWidth: number;
   public readonly height!: number;
   public readonly width!: number;
+
+  public state!: EditorRenderState;
 
   constructor(
     public canvas: HTMLCanvasElement,
@@ -60,6 +81,8 @@ export class Editor {
       lineHeight: 12 * 1.5,
     }
   ) {
+    this.resetState();
+
     this.editorPlugins = plugins
       .map(({ editor }) => editor)
       .filter(Boolean) as any;
@@ -149,7 +172,7 @@ export class Editor {
 
   private onWheel = (e: any) => {
     const previousScroll = this.scroll;
-    const scrollLimit = (this.model.text.length - 1) * this.font.lineHeight;
+    const scrollLimit = this.state.height;
 
     this.scroll = Math.min(scrollLimit, Math.max(0, this.scroll + e.deltaY));
 
@@ -232,10 +255,10 @@ export class Editor {
 
     const onMouseUp = () => {
       window.removeEventListener('mousemove', onMouseMove);
-      this.canvas.removeEventListener('mouseup', onMouseUp);
+      window.removeEventListener('mouseup', onMouseUp);
     };
 
-    this.canvas.addEventListener('mouseup', onMouseUp, false);
+    window.addEventListener('mouseup', onMouseUp, false);
   };
 
   private updateCaret() {
@@ -246,9 +269,31 @@ export class Editor {
     i.style.animation = anim;
   }
 
-  private renderModel() {
-    const { ctx, realCtx, editorPlugins, model, canvas, offScreenCanvas } =
-      this;
+  private resetState() {
+    this.state = {
+      autoFoldLines: 0,
+      linesSkipped: 0,
+      lastSkipped: undefined,
+      height: 0,
+    };
+  }
+
+  public renderModel() {
+    console.log('setup');
+
+    const {
+      ctx,
+      width,
+      height,
+      scroll,
+      realCtx,
+      editorPlugins,
+      model,
+      font,
+      canvas,
+      theme,
+      offScreenCanvas,
+    } = this;
 
     ctx.fillStyle = this.theme.bg;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -257,14 +302,148 @@ export class Editor {
     ctx.translate(0, -this.scroll);
 
     const plugins = editorPlugins.map((fn) => fn(this)).filter(Boolean);
+    const state = this.state;
 
-    model.render(this);
+    state.height = 0;
+
+    const tokenator: EditorTokenator = function* (tokens) {
+      let foldedLines: [number, number][] = [];
+
+      if (state.autoFoldLines > 0) {
+        foldedLines = [
+          // @TODO: Handle empty lines maybe
+          // [17 - 1, 19 - 1],
+          // [23 - 1, 25 - 1],
+          // [25 - 1, 27 - 1],
+          [19 - 1, 23 - 1],
+          [43 - 1, 62 - 1],
+          [62 - 1, 95 - 1],
+          [97 - 1, 120 - 1],
+          [122 - 1, 132 - 1],
+          [134 - 1, 151 - 1],
+          [153 - 1, 227 - 1],
+          [229 - 1, 235 - 1],
+          [237 - 1, 264 - 1],
+        ];
+      }
+
+      const visibleLines = [
+        // 0,
+        // Infinity,
+        Math.floor(scroll / font.lineHeight),
+        Math.floor((height + scroll) / font.lineHeight),
+      ];
+
+      tokenLoop:
+      for (const rowRaw in tokens) {
+        const row = parseInt(rowRaw);
+
+        for (const folds of foldedLines) {
+          if (!(row <= folds[0] || row >= folds[1])) {
+            state.lastSkipped = row;
+            state.linesSkipped++;
+
+            continue tokenLoop;
+          }
+        }
+
+        const lastWasSkippedLine = state.lastSkipped != null && state.lastSkipped + 1 === row;
+
+        if (lastWasSkippedLine) {
+          ctx.translate(0, font.lineHeight);
+          state.height += font.lineHeight;
+        }
+
+        // const rowAdjusted = row - state.linesSkipped + Math.floor(state.offsetAdded / font.lineHeight);
+
+        if (row > 0) {
+          ctx.translate(0, font.lineHeight);
+          state.height += font.lineHeight;
+        }
+
+        // const lastWasSkippedLine = state.lastSkipped != null && state.lastSkipped + 1 === row;
+
+        // if (lastWasSkippedLine) {
+        //   ctx.translate(0, font.lineHeight);
+        //   // state.offsetAdded += font.lineHeight;
+        //   offset += font.lineHeight;
+        // }
+
+        // for (const folds of foldedLines) {
+        //   if (!(row <= folds[0] || row >= folds[1])) {
+        //     state.lastSkipped = row;
+        //     state.linesSkipped++;
+
+        //     ctx.textBaseline = 'top';
+        //     ctx.fillText(
+        //       'asd',
+        //       model.gutterWidth,
+        //       3 + font.lineHeight * 1
+        //     );
+
+        //     // yield {
+        //     //   row,
+        //     //   rowAdjusted,
+        //     //   offset,
+        //     // };
+
+        //     continue tokenLoop;
+        //   }
+        // }
+
+        // if (row > 0) {
+        //   ctx.translate(0, font.lineHeight);
+        // }
+
+        // const rowAdjusted = row - state.linesSkipped + Math.floor(offset / font.lineHeight);
+
+        // @TODO: Make performance lines hidden
+        // if (row < visibleLines[0] || row > visibleLines[1]) {
+        //   continue tokenLoop;
+        // }
+
+        // if (rowAdjusted > visibleLines[1]) {
+        //   break tokenLoop;
+        // }
+
+        if (lastWasSkippedLine) {
+          // ctx.translate(0, font.lineHeight);
+          ctx.fillStyle = 'rgba(0,0,0,0.15)';
+          ctx.fillRect(
+            0,
+            -font.lineHeight - 2,
+            width,
+            font.lineHeight,
+          );
+
+          ctx.fillStyle = theme.punctuation;
+          ctx.fillText(
+            `...`,
+            50 + 30,
+            -font.lineHeight,
+          );
+        }
+
+        console.log('render', row + 1);
+
+        yield {
+          row,
+          // rowAdjusted,
+        };
+      }
+      // yield {
+      //   row: 1,
+      //   offset: 0,
+      // };
+    }
+
+    model.render(this, tokenator);
+
+    ctx.restore();
 
     for (const pluginEnd of plugins) {
       pluginEnd!();
     }
-
-    ctx.restore();
 
     realCtx.drawImage(
       offScreenCanvas,

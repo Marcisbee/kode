@@ -10,6 +10,10 @@ export function preserveIndent(tabCharacter = '  '): EditorPluginConfig {
   return {
     input({ model }) {
       return (event) => {
+        if (event.type !== 'keydown') {
+          return;
+        }
+
         if (event.key !== 'Enter') {
           return;
         }

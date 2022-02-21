@@ -1,8 +1,8 @@
-import type { Editor } from './editor';
+import type { Editor, EditorTokenator } from './editor';
 import { tokenize } from './lexer/prism';
 import { typescript } from './lexer/languages/typescript';
 import { Token, normalizeTokens } from './lexer/normalize-tokens';
-import { typecheck } from './lsp/typescript';
+// import { typecheck } from './lsp/typescript';
 
 export interface ModelSelection {
   start: {
@@ -65,8 +65,11 @@ export class Model {
     this.updateTokens();
   }
 
-  public render(editor: Editor) {
-    const { height, ctx, font, input, scroll, modelPlugins, letterWidth, theme } = editor;
+  public render(
+    editor: Editor,
+    tokenator: EditorTokenator,
+  ) {
+    const { state, ctx, font, input, scroll, modelPlugins, letterWidth, theme } = editor;
 
     const startX = this.selections[0].start.x;
     const startY = this.selections[0].start.y;
@@ -86,24 +89,16 @@ export class Model {
 
     this.cachedLineGuide = 0;
 
+    state.linesSkipped = 0;
+    state.offsetAdded = 0;
+
     const plugins = modelPlugins.map((fn) => fn(editor)).filter(Boolean);
 
-    const visibleLines = [
-      Math.floor(scroll / font.lineHeight),
-      Math.floor((height + scroll) / font.lineHeight),
-    ]
+    console.log('render');
+    console.log(state);
 
-    for (const rowRaw in this.tokens) {
-      const row = parseInt(rowRaw);
+    for (const { row } of tokenator(this.tokens)) {
       let col = 0;
-
-      if (row > 0) {
-        ctx.translate(0, font.lineHeight);
-      }
-
-      if (row < visibleLines[0] || row > visibleLines[1]) {
-        continue;
-      }
 
       if (this.selections.length > 0) {
         ctx.fillStyle = theme.selection;
@@ -322,28 +317,28 @@ export class Model {
       // @TODO: Normalize this beforehand.
       .map((row) => row.filter((t) => !t.empty && !!t.content));
 
-    const errors = code ? typecheck(code) : [];
+    // const errors = code ? typecheck(code) : [];
 
-    this.diagnostics = errors
-      .map((e) => {
-        const textBefore = code.substring(0, e.start || 0);
-        const linesBeforeEnd = textBefore.split('\n');
-        const textAfter = code.substring(0, (e.start || 0) + (e.length || 0));
-        const linesAfterEnd = textAfter.split('\n');
+    // this.diagnostics = errors
+    //   .map((e) => {
+    //     const textBefore = code.substring(0, e.start || 0);
+    //     const linesBeforeEnd = textBefore.split('\n');
+    //     const textAfter = code.substring(0, (e.start || 0) + (e.length || 0));
+    //     const linesAfterEnd = textAfter.split('\n');
 
-        return ({
-          category: e.category as any,
-          code: e.code,
-          message: e.messageText as string,
-          start: {
-            y: linesBeforeEnd.length - 1,
-            x: (linesBeforeEnd[linesBeforeEnd.length - 1].length || 0),
-          },
-          end: {
-            y: linesAfterEnd.length - 1,
-            x: (linesAfterEnd[linesAfterEnd.length - 1].length || 0),
-          },
-        });
-      });
+    //     return ({
+    //       category: e.category as any,
+    //       code: e.code,
+    //       message: e.messageText as string,
+    //       start: {
+    //         y: linesBeforeEnd.length - 1,
+    //         x: (linesBeforeEnd[linesBeforeEnd.length - 1].length || 0),
+    //       },
+    //       end: {
+    //         y: linesAfterEnd.length - 1,
+    //         x: (linesAfterEnd[linesAfterEnd.length - 1].length || 0),
+    //       },
+    //     });
+    //   });
   }
 }

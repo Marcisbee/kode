@@ -4,6 +4,10 @@ export function tabPlugin(tabCharacter = '  '): EditorPluginConfig {
   return {
     input({ model }) {
       return (event) => {
+        if (event.type !== 'keydown') {
+          return;
+        }
+
         if (event.key !== 'Tab') {
           return;
         }

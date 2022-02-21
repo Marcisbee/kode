@@ -27,23 +27,47 @@ const barMargin = 4;
 
 export function scrollbarPlugin(): EditorPluginConfig {
   return {
-    editor({ ctx, model, scroll, height, width, font, theme }) {
-      const modelHeight = model.text.length * font.lineHeight;
-      const visiblePercentage = Math.min(100, 100 / (modelHeight + height) * height);
-      const scrollPercentage = 100 / modelHeight * scroll;
-      const barHeight = (Math.max(30, height / 100 * visiblePercentage) - (barMargin * 2));
-      const scrollTop = ((height - barHeight) / 100) * scrollPercentage;
+    editor({ ctx, state, height, scroll, width, theme }) {
+      return () => {
+        const { height: modelHeight } = state;
 
-      ctx.fillStyle = theme.scrollbar;
+        const visiblePercentage = Math.min(100, 100 / (modelHeight + height) * height);
+        const scrollPercentage = 100 / modelHeight * scroll;
+        const barHeight = (Math.max(30, height / 100 * visiblePercentage) - (barMargin * 2));
+        const scrollTop = ((height - barHeight) / 100) * scrollPercentage;
 
-      roundRect(
-        ctx,
-        width - barWidth - barMargin,
-        scroll + (scrollTop) + barMargin,
-        barWidth,
-        barHeight,
-        barWidth / 2,
-      );
+        // ctx.fillStyle = 'orange';
+        // ctx.fillText(
+        //   JSON.stringify({ visiblePercentage }),
+        //   500,
+        //   20,
+        // );
+        // ctx.fillText(
+        //   JSON.stringify({ scrollPercentage }),
+        //   500,
+        //   35,
+        // );
+        // ctx.fillText(
+        //   JSON.stringify({ barHeight }),
+        //   500,
+        //   50,
+        // );
+        // ctx.fillText(
+        //   JSON.stringify({ scrollTop }),
+        //   500,
+        //   65,
+        // );
+
+        ctx.fillStyle = theme.scrollbar;
+        roundRect(
+          ctx,
+          width - barWidth - barMargin,
+          (scrollTop) + barMargin,
+          barWidth,
+          barHeight,
+          barWidth / 2,
+        );
+      }
     },
   };
 }

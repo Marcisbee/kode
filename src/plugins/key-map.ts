@@ -2,10 +2,43 @@ import type { EditorPluginConfig } from './types';
 
 export function keyMapPlugin(): EditorPluginConfig {
   return {
-    input({ model }) {
+    input(editor) {
+      const { model } = editor;
+
       return (event) => {
+        if (event.type !== 'keydown') {
+          return;
+        }
+
+        if (event.key === 'Alt') {
+          editor.state.autoFoldLines = 1;
+
+          function resetHandler() {
+            editor.state.autoFoldLines = 0;
+            window.removeEventListener('keyup', handler);
+
+            editor.renderModel();
+          }
+
+          function handler(e: KeyboardEvent) {
+            if (e.type !== 'keyup') {
+              return;
+            }
+
+            if (e.key !== 'Alt') {
+              return;
+            }
+
+            resetHandler();
+          }
+
+          window.addEventListener('keyup', handler, false);
+          window.addEventListener('blur', resetHandler, false);
+
+          return;
+        }
+
         if (event.metaKey) {
-          // @TODO: Select all model
           if (event.key === 'a') {
             const lastLineNumber = model.text.length - 1;
             const lastLineLength = model.text[lastLineNumber].length;
