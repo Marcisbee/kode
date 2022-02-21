@@ -291,7 +291,7 @@ new Editor(
   [
     ...recommendedPlugins,
     ...(
-      process.env.NODE_ENV !== 'production'
+      process.env.NODE_ENV === 'production'
         ? [statsPlugin()]
         : []
     ),
