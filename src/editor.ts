@@ -43,6 +43,17 @@ export interface EditorTokenator {
   (tokens: Token[][]): Generator<EditorTokenatorResponse>;
 }
 
+export const recommendedPlugins: EditorPluginConfig[] = [
+  selectedLinePlugin(),
+  footerPlugin(),
+  selectedIdentifierPlugin(),
+  autoClosePlugin(),
+  keyMapPlugin(),
+  tabPlugin(),
+  preserveIndent(),
+  scrollbarPlugin(),
+];
+
 export class Editor {
   public scroll: number = 0;
   public input: HTMLInputElement;
@@ -65,16 +76,7 @@ export class Editor {
     public canvas: HTMLCanvasElement,
     public model = new Model(['']),
     public theme: Record<string, string> = AtomOneDark,
-    public plugins: EditorPluginConfig[] = [
-      selectedLinePlugin(),
-      footerPlugin(),
-      selectedIdentifierPlugin(),
-      autoClosePlugin(),
-      keyMapPlugin(),
-      tabPlugin(),
-      preserveIndent(),
-      scrollbarPlugin(),
-    ],
+    public plugins: EditorPluginConfig[] = recommendedPlugins.slice(),
     public font: EditorFontConfig = {
       size: 12,
       family: '"Menlo", monospace',

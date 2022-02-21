@@ -1,2 +1,2 @@
-export { Editor } from './editor';
+export { Editor, recommendedPlugins } from './editor';
 export { Model } from './model';

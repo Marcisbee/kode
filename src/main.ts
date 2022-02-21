@@ -1,7 +1,9 @@
 import {
   Editor,
   Model,
+  recommendedPlugins,
 } from './kode';
+import { statsPlugin } from './plugins/stats';
 import './style.css';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#canvas')!;
@@ -282,4 +284,16 @@ export class Editor {
 }
 `.split('\n'));
 
-new Editor(canvas, model);
+new Editor(
+  canvas,
+  model,
+  undefined,
+  [
+    ...recommendedPlugins,
+    ...(
+      process.env.NODE_ENV !== 'production'
+        ? [statsPlugin()]
+        : []
+    ),
+  ],
+);
