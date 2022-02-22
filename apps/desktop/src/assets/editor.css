@@ -1,0 +1,83 @@
+@import url('reset.css');
+
+#app {
+  background-color: #1c1e24;
+  color: #fff;
+  width: 100vw;
+  height: 100vh;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
+}
+
+#left {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200px;
+  height: 100vh;
+  padding: 20px 10px;
+}
+
+#left ul {
+  margin-left: 10px;
+  padding: 0;
+}
+
+#left li {
+  display: block;
+  height: 22px;
+  line-height: 22px;
+}
+
+#left li svg {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  line-height: inherit;
+  vertical-align: middle;
+  margin-right: 4px;
+  opacity: 0.7;
+}
+
+#content {
+  margin-left: 200px;
+  width: calc(100% - 200px);
+  height: 100vh;
+  padding: 10px;
+}
+
+#tabs {
+  width: 100%;
+  height: 36px;
+  background-color: #21242b;
+  border-radius: 5px 5px 0 0;
+  border-bottom: 1px solid #333944;
+  overflow: hidden;
+}
+
+#tabs ul {
+  display: block;
+  padding: 0;
+  margin: 0;
+}
+
+#tabs li {
+  display: inline-block;
+  height: 36px;
+  line-height: 36px;
+  background-color: #282c34;
+  padding: 0 13px;
+}
+
+#editorWrapper {
+  width: 100%;
+  height: calc(100% - 56px);
+  padding: 0 0 5px 0;
+  background-color: #282c34;
+  border-radius: 0 0 5px 5px;
+}
+
+#editor {
+  width: 100%;
+  height: calc(100% - 5px);
+}

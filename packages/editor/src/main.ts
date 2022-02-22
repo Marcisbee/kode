@@ -6,7 +6,7 @@ import {
 import { statsPlugin } from './plugins/stats';
 import './style.css';
 
-const canvas = document.querySelector<HTMLCanvasElement>('#canvas')!;
+const editor = document.querySelector<HTMLDivElement>('#editor')!;
 
 // const stressTest = new Array(2000).fill(`export class Editor {
 //   public scroll: number = 0;
@@ -285,7 +285,7 @@ export class Editor {
 `.split('\n'));
 
 new Editor(
-  canvas,
+  editor,
   model,
   undefined,
   [

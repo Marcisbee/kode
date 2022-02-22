@@ -14,7 +14,7 @@ import type {
   ModelPlugin,
 } from './plugins/types';
 import { AtomOneDark } from './themes/atom-one-dark';
-import { createInput, getRowByTop, measureText } from './utils';
+import { createInput, getRowByTop } from './utils';
 
 interface EditorFontConfig {
   size: number;
@@ -51,6 +51,7 @@ export class Editor {
   public modelPlugins: ModelPlugin[] = [];
   public inputPlugins: InputPlugin[] = [];
 
+  public canvas!: HTMLCanvasElement;
   private offScreenCanvas = document.createElement('canvas');
   private realCtx: CanvasRenderingContext2D;
   public ctx = this.offScreenCanvas.getContext('2d')!;
@@ -62,7 +63,7 @@ export class Editor {
   public state!: EditorRenderState;
 
   constructor(
-    public canvas: HTMLCanvasElement,
+    public container: HTMLElement,
     public model = new Model(['']),
     public theme: Record<string, string> = AtomOneDark,
     public plugins: EditorPluginConfig[] = recommendedPlugins.slice(),
@@ -74,6 +75,25 @@ export class Editor {
   ) {
     this.resetState();
 
+    Object.assign(this.container.style, {
+      transform: 'translateZ(0)',
+      overflow: 'hidden',
+      position: 'relative',
+    });
+
+    const label = document.createElement('label');
+
+    Object.assign(label.style, {
+      display: 'block',
+      fontSize: 0,
+      transform: 'translateZ(0)',
+      cursor: 'text',
+    });
+
+    this.canvas = document.createElement('canvas');
+    label.appendChild(this.canvas);
+    container.appendChild(label);
+
     this.editorPlugins = plugins
       .map(({ editor }) => editor)
       .filter(Boolean) as any;
@@ -84,18 +104,16 @@ export class Editor {
       .map(({ input }) => input?.(this))
       .filter(Boolean) as any;
 
-    const measurements = measureText(
-      'SELECTED',
-      `${font.size}px ${font.family}`
-    );
+    this.ctx.font = `${font.size}px ${font.family}`;
+    const measurements = this.ctx.measureText('M');
 
-    this.letterWidth = measurements.width / 8;
+    this.letterWidth = measurements.width;
 
-    this.realCtx = canvas.getContext('2d')!;
+    this.realCtx = this.canvas.getContext('2d')!;
     this.input = createInput(this);
 
-    this.canvas.style.letterSpacing = '0px';
-    this.offScreenCanvas.style.letterSpacing = '0px';
+    // this.canvas.style.letterSpacing = '0px';
+    // this.offScreenCanvas.style.letterSpacing = '0px';
 
     this.input.addEventListener('keydown', this.onInput, false);
 
@@ -125,8 +143,8 @@ export class Editor {
   }
 
   private onResize = () => {
-    const w = window.innerWidth;
-    const h = window.innerHeight;
+    const w = this.container.clientWidth;
+    const h = this.container.clientHeight;
     const wRatio = w * devicePixelRatio;
     const hRatio = h * devicePixelRatio;
 

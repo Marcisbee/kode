@@ -8,9 +8,44 @@
   </head>
   <body>
     <div id="app">
-      <label>
-        <canvas id="canvas"></canvas>
-      </label>
+      <div id="left">
+        <ul>
+          <li>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+              <path fill="currentColor" d="M11 5c-1.629 0-2.305-1.058-4-3h-7v20h24v-17h-13z" />
+            </svg>
+            src
+          </li>
+          <li>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+              <path
+                fill="currentColor"
+                d="M14.568.075c2.202 1.174 5.938 4.883 7.432 6.881-1.286-.9-4.044-1.657-6.091-1.179.222-1.468-.185-4.534-1.341-5.702zm-.824 7.925s1.522-8-3.335-8h-8.409v24h20v-13c0-3.419-5.247-3.745-8.256-3z" />
+            </svg>
+            main.ts
+          </li>
+          <li>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+              <path
+                fill="currentColor"
+                d="M14.568.075c2.202 1.174 5.938 4.883 7.432 6.881-1.286-.9-4.044-1.657-6.091-1.179.222-1.468-.185-4.534-1.341-5.702zm-.824 7.925s1.522-8-3.335-8h-8.409v24h20v-13c0-3.419-5.247-3.745-8.256-3z" />
+            </svg>
+            config.json
+          </li>
+        </ul>
+      </div>
+      <div id="content">
+        <div id="tabs">
+          <ul>
+            <li>
+              main.ts
+            </li>
+          </ul>
+        </div>
+        <div id="editorWrapper">
+          <div id="editor"></div>
+        </div>
+      </div>
     </div>
     <script src="js/neutralino.js"></script>
     <!-- Your app's source files -->

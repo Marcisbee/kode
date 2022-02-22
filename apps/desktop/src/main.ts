@@ -2,10 +2,11 @@ import {
   Editor,
   Model,
 } from 'editor';
-
 import 'editor/src/style.css';
 
-const canvas = document.querySelector<HTMLCanvasElement>('#canvas')!;
+import './assets/editor.css';
+
+const editor = document.querySelector<HTMLDivElement>('#editor')!;
 
 // const stressTest = new Array(2000).fill(`export class Editor {
 //   public scroll: number = 0;
@@ -283,7 +284,7 @@ export class Editor {
 }
 `.split('\n'));
 
-new Editor(canvas, model);
+new Editor(editor, model);
 
 // @ts-ignore
 Neutralino.init();
