@@ -52,8 +52,6 @@ export class LinesShrink {
   ) { }
 }
 
-let linesCache: any[] | undefined;
-
 interface ModelEvents {
   update(): void;
 }
@@ -388,14 +386,9 @@ export class Model {
       }
       let lastSkipped!: number;
 
-      // if (linesCache) {
-      //   state.lines = linesCache;
-      // } else {
       state.lines = [];
       state.height = 0;
-      // }
 
-      // if (!linesCache) {
       // Prepare tokens
       tokenLoop:
       for (const rowRaw in this.tokens) {
@@ -425,9 +418,6 @@ export class Model {
       }
 
       state.height -= state.lines[state.lines.length - 1].height;
-
-      // linesCache = state.lines;
-      // }
 
       console.log('Updated');
     }
@@ -478,7 +468,6 @@ export class Model {
     const code = this.text.join('\n');
     const rawTokens = tokenize(code, typescript) as any;
 
-    linesCache = undefined;
     this.tokens = normalizeTokens(rawTokens)
       // @TODO: Normalize this beforehand.
       .map((row) => row.filter((t) => !t.empty && !!t.content));
