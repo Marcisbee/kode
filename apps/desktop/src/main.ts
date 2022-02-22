@@ -3,6 +3,8 @@ import {
   Model,
 } from 'editor';
 
+import 'editor/src/style.css';
+
 const canvas = document.querySelector<HTMLCanvasElement>('#canvas')!;
 
 // const stressTest = new Array(2000).fill(`export class Editor {
