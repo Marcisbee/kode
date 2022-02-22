@@ -1,7 +1,7 @@
 import type { Editor } from './editor';
 import { tokenize } from './lexer/prism';
 import { typescript } from './lexer/languages/typescript';
-import { Token, normalizeTokens } from './lexer/normalize-tokens';
+import { type Token, normalizeTokens } from './lexer/normalize-tokens';
 import { createEvents, Emitter, getLinePosition } from './utils';
 // import { typecheck } from './lsp/typescript';
 

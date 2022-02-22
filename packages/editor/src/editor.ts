@@ -1,4 +1,4 @@
-import { Token } from './lexer/normalize-tokens';
+import type { Token } from './lexer/normalize-tokens';
 import { Line, LinesShrink, Model, ModelSelection } from './model';
 import { autoClosePlugin } from './plugins/auto-close';
 import { footerPlugin } from './plugins/footer';
