@@ -70,7 +70,7 @@ export function selectedIdentifierPlugin(): EditorPluginConfig {
         ctx.fillStyle = theme['match-identifier'];
         ctx.fillRect(
           model.gutterWidth + letterWidth * (col + leadingSpace.length),
-          -2,
+          0,
           letterWidth * token.content.trim().length,
           font.lineHeight
         );

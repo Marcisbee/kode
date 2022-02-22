@@ -6,6 +6,8 @@
   height: 100%;
   background-color: #15181e;
   cursor: text;
+  margin: 0;
+  padding: 0;
 }
 
 label {

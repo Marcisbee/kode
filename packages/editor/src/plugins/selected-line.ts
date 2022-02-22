@@ -21,7 +21,7 @@ export function selectedLinePlugin(): EditorPluginConfig {
 
         ctx.fillRect(
           0,
-          topPosition.y - 2,
+          topPosition.y,
           width,
           topPosition.h
         );

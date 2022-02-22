@@ -93,7 +93,7 @@ export class Model {
       Math.min(startX, this.text[startY].length) * letterWidth;
     const inputY = getLinePosition(state, startY);
 
-    input.style.transform = `translate(${inputX}px, ${(inputY?.y || 0) - scroll}px)`;
+    input.style.transform = `translate(${inputX}px, ${(inputY?.y || 0) + 2 - scroll}px)`;
 
     function resetFontOptions() {
       ctx.font = fontFamily;
@@ -175,7 +175,7 @@ export class Model {
           ctx.fillStyle = 'rgba(0,0,0,0.15)';
           ctx.fillRect(
             0,
-            -2,
+            0,
             editor.width,
             line.height,
           );
@@ -362,7 +362,7 @@ export class Model {
   public renderDiagnosticBackground({ ctx, width, font }: Editor) {
     ctx.fillRect(
       0,
-      -2,
+      0,
       width,
       font.lineHeight
     );
@@ -385,7 +385,7 @@ export class Model {
   public renderSelections({ ctx, font, letterWidth }: Editor, start: number, end: number) {
     ctx.fillRect(
       this.gutterWidth + letterWidth * start,
-      -2,
+      0,
       letterWidth * end,
       font.lineHeight
     );
@@ -401,7 +401,7 @@ export class Model {
     for (let i = 0; i < this.cachedLineGuide; i++) {
       ctx.fillRect(
         this.gutterWidth + letterWidth * (2 * i),
-        -2,
+        0,
         1,
         font.lineHeight
       );
