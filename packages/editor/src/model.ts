@@ -53,8 +53,142 @@ export class LinesShrink {
 }
 
 interface ModelEvents {
-  update(): void;
+  update(code: string): void;
 }
+
+function squashPlugin(editor: Editor) {
+  const { model } = editor;
+
+  const update = () => {
+    const { state, font } = editor;
+
+    let foldedLines: [number, number][] = [];
+    if (state.autoFoldLines > 0) {
+      foldedLines = [
+        // @TODO: Handle empty lines maybe
+        // [17 - 1, 19 - 1],
+        // [23 - 1, 25 - 1],
+        // [25 - 1, 27 - 1],
+        [19 - 1, 23 - 1],
+        [43 - 1, 62 - 1],
+        [62 - 1, 95 - 1],
+        [97 - 1, 120 - 1],
+        [122 - 1, 132 - 1],
+        [134 - 1, 151 - 1],
+        [153 - 1, 227 - 1],
+        [229 - 1, 235 - 1],
+        [237 - 1, 264 - 1],
+      ];
+    }
+    let lastSkipped!: number;
+
+    state.lines = [];
+    state.height = 0;
+
+    const tokens: Token[][] = (model as any).tokens;
+
+    // Prepare tokens
+    tokenLoop:
+    for (const rowRaw in tokens) {
+      const row = parseInt(rowRaw);
+      const line = tokens[row];
+
+      for (const folds of foldedLines) {
+        if (!(row <= folds[0] || row >= folds[1])) {
+          lastSkipped = row;
+
+          continue tokenLoop;
+        }
+      }
+
+      const lastWasSkippedLine = lastSkipped != null && lastSkipped + 1 === row;
+
+      if (lastWasSkippedLine) {
+        // @TODO: Push all shrinked lines
+        const lineHeight = font.lineHeight * 1.5;
+        state.lines.push(new LinesShrink(row, [], lineHeight));
+        state.height += lineHeight;
+      }
+
+      const lineHeight = font.lineHeight;
+      state.lines.push(new Line(row, line, lineHeight));
+      state.height += lineHeight;
+    }
+
+    state.height -= state.lines[state.lines.length - 1].height;
+  }
+
+  editor.events.on('input', (event) => {
+    if (event.type !== 'keydown') {
+      return;
+    }
+
+    if (event.key !== 'Alt') {
+      return;
+    }
+
+    editor.state.autoFoldLines = 1;
+
+    function resetHandler() {
+      editor.state.autoFoldLines = 0;
+      window.removeEventListener('keyup', handler);
+
+      update();
+      editor.renderModel();
+    }
+
+    function handler(e: KeyboardEvent) {
+      if (e.type !== 'keyup') {
+        return;
+      }
+
+      if (e.key !== 'Alt') {
+        return;
+      }
+
+      resetHandler();
+    }
+
+    window.addEventListener('keyup', handler, false);
+    window.addEventListener('blur', resetHandler, false);
+
+    update();
+  });
+
+  model.events.on('update', update);
+}
+
+// function typecheckPlugin(editor: Editor) {
+//   const { model } = editor;
+
+//   function update(code: string) {
+//     const errors = code ? typecheck(code) : [];
+
+//     model.diagnostics = errors
+//       .map((e) => {
+//         const textBefore = code.substring(0, e.start || 0);
+//         const linesBeforeEnd = textBefore.split('\n');
+//         const textAfter = code.substring(0, (e.start || 0) + (e.length || 0));
+//         const linesAfterEnd = textAfter.split('\n');
+
+//         return ({
+//           category: e.category as any,
+//           code: e.code,
+//           message: e.messageText as string,
+//           start: {
+//             y: linesBeforeEnd.length - 1,
+//             x: (linesBeforeEnd[linesBeforeEnd.length - 1].length || 0),
+//           },
+//           end: {
+//             y: linesAfterEnd.length - 1,
+//             x: (linesAfterEnd[linesAfterEnd.length - 1].length || 0),
+//           },
+//         });
+//       });
+//   }
+
+//   model.events.on('update', update);
+// }
 
 export class Model {
   public diagnostics: ModelDiagnostic[] = [];
@@ -363,105 +497,9 @@ export class Model {
   }
 
   public _hook(editor: Editor) {
-    const update = () => {
-      const { state, font } = editor;
-
-      let foldedLines: [number, number][] = [];
-      if (state.autoFoldLines > 0) {
-        foldedLines = [
-          // @TODO: Handle empty lines maybe
-          // [17 - 1, 19 - 1],
-          // [23 - 1, 25 - 1],
-          // [25 - 1, 27 - 1],
-          [19 - 1, 23 - 1],
-          [43 - 1, 62 - 1],
-          [62 - 1, 95 - 1],
-          [97 - 1, 120 - 1],
-          [122 - 1, 132 - 1],
-          [134 - 1, 151 - 1],
-          [153 - 1, 227 - 1],
-          [229 - 1, 235 - 1],
-          [237 - 1, 264 - 1],
-        ];
-      }
-      let lastSkipped!: number;
-
-      state.lines = [];
-      state.height = 0;
-
-      // Prepare tokens
-      tokenLoop:
-      for (const rowRaw in this.tokens) {
-        const row = parseInt(rowRaw);
-        const line = this.tokens[row];
-
-        for (const folds of foldedLines) {
-          if (!(row <= folds[0] || row >= folds[1])) {
-            lastSkipped = row;
-
-            continue tokenLoop;
-          }
-        }
-
-        const lastWasSkippedLine = lastSkipped != null && lastSkipped + 1 === row;
-
-        if (lastWasSkippedLine) {
-          // @TODO: Push all shrinked lines
-          const lineHeight = font.lineHeight * 1.5;
-          state.lines.push(new LinesShrink(row, [], lineHeight));
-          state.height += lineHeight;
-        }
-
-        const lineHeight = font.lineHeight;
-        state.lines.push(new Line(row, line, lineHeight));
-        state.height += lineHeight;
-      }
-
-      state.height -= state.lines[state.lines.length - 1].height;
-
-      console.log('Updated');
-    }
-
-    editor.events.on('input', (event) => {
-      if (event.type !== 'keydown') {
-        return;
-      }
-
-      if (event.key !== 'Alt') {
-        return;
-      }
-
-      editor.state.autoFoldLines = 1;
-
-      function resetHandler() {
-        editor.state.autoFoldLines = 0;
-        window.removeEventListener('keyup', handler);
-
-        update();
-        editor.renderModel();
-      }
-
-      function handler(e: KeyboardEvent) {
-        if (e.type !== 'keyup') {
-          return;
-        }
-
-        if (e.key !== 'Alt') {
-          return;
-        }
-
-        resetHandler();
-      }
-
-      window.addEventListener('keyup', handler, false);
-      window.addEventListener('blur', resetHandler, false);
-
-      update();
-    });
-
-    this.events.on('update', update);
-
-    update();
+    squashPlugin(editor);
+    // typecheckPlugin(editor);
+    this.updateTokens();
   }
 
   private updateTokens() {
@@ -472,30 +510,6 @@ export class Model {
       // @TODO: Normalize this beforehand.
       .map((row) => row.filter((t) => !t.empty && !!t.content));
 
-    this.events.emit('update');
-
-    // const errors = code ? typecheck(code) : [];
-
-    // this.diagnostics = errors
-    //   .map((e) => {
-    //     const textBefore = code.substring(0, e.start || 0);
-    //     const linesBeforeEnd = textBefore.split('\n');
-    //     const textAfter = code.substring(0, (e.start || 0) + (e.length || 0));
-    //     const linesAfterEnd = textAfter.split('\n');
-
-    //     return ({
-    //       category: e.category as any,
-    //       code: e.code,
-    //       message: e.messageText as string,
-    //       start: {
-    //         y: linesBeforeEnd.length - 1,
-    //         x: (linesBeforeEnd[linesBeforeEnd.length - 1].length || 0),
-    //       },
-    //       end: {
-    //         y: linesAfterEnd.length - 1,
-    //         x: (linesAfterEnd[linesAfterEnd.length - 1].length || 0),
-    //       },
-    //     });
-    //   });
+    this.events.emit('update', code);
   }
 }
