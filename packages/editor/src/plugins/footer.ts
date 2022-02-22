@@ -1,6 +1,6 @@
-import type { EditorPluginConfig } from './types';
+import type { EditorPlugin } from './types';
 
-export function footerPlugin(): EditorPluginConfig {
+export function footerPlugin(): EditorPlugin {
   const footer = document.createElement('div');
   footer.id = 'footer';
 
@@ -10,8 +10,8 @@ export function footerPlugin(): EditorPluginConfig {
 
   footer.appendChild(stats);
 
-  return {
-    editor({ model }) {
+  return ({ model, events }) => {
+    events.on('render', () => {
       const t0 = performance.now();
 
       return () => {
@@ -27,6 +27,6 @@ export function footerPlugin(): EditorPluginConfig {
 
         stats.textContent = `${selections.join(' | ')} | rendered in ${(t1 - t0).toFixed(2)}ms | ${model.diagnostics.length} issues`;
       };
-    },
+    });
   };
 }

@@ -17,6 +17,7 @@ esbuild
       'process.env.NODE_ENV': '"production"',
     },
     metafile: true,
+    mangleProps: /^_/,
   })
   .then(async (result) => {
     const text = await esbuild.analyzeMetafile(result.metafile);

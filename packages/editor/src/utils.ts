@@ -54,3 +54,48 @@ export function getRowByTop(state: EditorRenderState, top: number): number | voi
     }
   }
 }
+
+/**
+ * Modified:
+ * https://github.com/ai/nanoevents/blob/main/index.d.ts
+ */
+interface EventsMap {
+  [event: string]: any;
+}
+
+interface DefaultEvents extends EventsMap {
+  [event: string]: (...args: any) => void;
+}
+
+export interface Unsubscribe {
+  (): void;
+}
+
+export interface Emitter<Events extends EventsMap = DefaultEvents> {
+  on<K extends keyof Events>(this: this, event: K, cb: Events[K]): Unsubscribe;
+  emit<K extends keyof Events>(
+    this: this,
+    event: K,
+    ...args: Parameters<Events[K]>
+  ): (Function | void)[];
+}
+
+export interface InnerEmitter<Events extends EventsMap = DefaultEvents> extends Emitter {
+  _e: Partial<{ [E in keyof Events]: Events[E][] }>;
+}
+
+export function createEvents<
+  Events extends EventsMap = DefaultEvents
+>(): Emitter<Events> {
+  return {
+    _e: {},
+    emit(event, ...args) {
+      return (this._e[event] || [] as any).map((i: Function) => i(...(args as any)))
+    },
+    on(event, cb) {
+      (this._e[event] = this._e[event] || [] as any).push(cb)
+      return () =>
+        (this._e[event] = (this._e[event] || [] as any).filter((i: Function) => i !== cb))
+    },
+  } as InnerEmitter<Events>;
+}

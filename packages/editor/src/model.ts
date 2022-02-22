@@ -2,7 +2,7 @@ import type { Editor } from './editor';
 import { tokenize } from './lexer/prism';
 import { typescript } from './lexer/languages/typescript';
 import { Token, normalizeTokens } from './lexer/normalize-tokens';
-import { getLinePosition } from './utils';
+import { createEvents, Emitter, getLinePosition } from './utils';
 // import { typecheck } from './lsp/typescript';
 
 export interface ModelSelection {
@@ -52,11 +52,19 @@ export class LinesShrink {
   ) { }
 }
 
+let linesCache: any[] | undefined;
+
+interface ModelEvents {
+  update(): void;
+}
+
 export class Model {
   public diagnostics: ModelDiagnostic[] = [];
   public gutterWidth = 50;
   private tokens: Token[][] = [];
-  private cachedLineGuide = 0;
+  private _cachedLineGuide = 0;
+
+  public events: Emitter<ModelEvents> = createEvents<ModelEvents>();
 
   constructor(
     public text: string[] = [''],
@@ -83,7 +91,7 @@ export class Model {
   }
 
   public render(editor: Editor) {
-    const { state, ctx, font, input, scroll, modelPlugins, letterWidth, theme } = editor;
+    const { events, state, ctx, font, input, scroll, letterWidth, theme } = editor;
 
     const startX = this.selections[0].start.x;
     const startY = this.selections[0].start.y;
@@ -95,69 +103,16 @@ export class Model {
 
     input.style.transform = `translate(${inputX}px, ${(inputY?.y || 0) + 2 - scroll}px)`;
 
+    ctx.font = fontFamily;
+    ctx.textBaseline = 'top';
+
     function resetFontOptions() {
-      ctx.font = fontFamily;
       ctx.textAlign = 'left';
-      ctx.textBaseline = 'top';
     }
 
-    this.cachedLineGuide = 0;
+    this._cachedLineGuide = 0;
 
-    const plugins = modelPlugins.map((fn) => fn(editor)).filter(Boolean);
-
-    let foldedLines: [number, number][] = [];
-    if (state.autoFoldLines > 0) {
-      foldedLines = [
-        // @TODO: Handle empty lines maybe
-        // [17 - 1, 19 - 1],
-        // [23 - 1, 25 - 1],
-        // [25 - 1, 27 - 1],
-        [19 - 1, 23 - 1],
-        [43 - 1, 62 - 1],
-        [62 - 1, 95 - 1],
-        [97 - 1, 120 - 1],
-        [122 - 1, 132 - 1],
-        [134 - 1, 151 - 1],
-        [153 - 1, 227 - 1],
-        [229 - 1, 235 - 1],
-        [237 - 1, 264 - 1],
-      ];
-    }
-    let lastSkipped!: number;
-
-    state.lines = [];
     state.position = 0;
-    state.height = 0;
-
-    // Prepare tokens
-    tokenLoop:
-    for (const rowRaw in this.tokens) {
-      const row = parseInt(rowRaw);
-      const line = this.tokens[row];
-
-      for (const folds of foldedLines) {
-        if (!(row <= folds[0] || row >= folds[1])) {
-          lastSkipped = row;
-
-          continue tokenLoop;
-        }
-      }
-
-      const lastWasSkippedLine = lastSkipped != null && lastSkipped + 1 === row;
-
-      if (lastWasSkippedLine) {
-        // @TODO: Push all shrinked lines
-        const lineHeight = font.lineHeight * 1.5;
-        state.lines.push(new LinesShrink(row, [], lineHeight));
-        state.height += lineHeight;
-      }
-
-      const lineHeight = font.lineHeight;
-      state.lines.push(new Line(row, line, lineHeight));
-      state.height += lineHeight;
-    }
-
-    state.height -= state.lines[state.lines.length - 1].height;
 
     // Render
     for (const line of state.lines) {
@@ -229,11 +184,11 @@ export class Model {
 
         const firstToken = tokens?.[0];
         if (firstToken?.content) {
-          this.cachedLineGuide = 0;
+          this._cachedLineGuide = 0;
         }
 
-        if (/^[ \t]+/.test(firstToken?.content)) {
-          this.cachedLineGuide = Math.ceil(firstToken.content.replace(/[^ \t].*$/, '').length / 2);
+        if (firstToken?.content.startsWith(' ') || firstToken?.content.startsWith('\t')) {
+          this._cachedLineGuide = Math.ceil(firstToken.content.replace(/[^ \t].*$/, '').length / 2);
         }
 
         this.renderGuides(editor);
@@ -269,6 +224,7 @@ export class Model {
         }
 
         this.renderLineNumber(editor, col, row);
+        resetFontOptions();
 
         for (const token of tokens) {
           // if (token.type === 'LineTerminatorSequence') {
@@ -286,13 +242,10 @@ export class Model {
           //   continue;
           // }
 
-          for (const pluginEnd of plugins) {
-            pluginEnd!(token, col, row);
-          }
+          events.emit('model', token, col, row);
 
           const [type] = token.types.slice(-1);
 
-          resetFontOptions();
           ctx.fillStyle = theme[type] || theme.plain;
           ctx.fillText(
             token.content,
@@ -348,15 +301,18 @@ export class Model {
   ) {
     const lineNumber = (row + 1).toString();
 
+    const lastFontStyle = ctx.font;
+
     ctx.fillStyle = theme.punctuation;
     ctx.font = `${font.size * 0.9}px ${font.family}`;
     ctx.textAlign = 'right';
-    ctx.textBaseline = 'top';
     ctx.fillText(
       lineNumber,
       this.gutterWidth - 20 + letterWidth * col,
       3 + font.lineHeight * 0
     );
+
+    ctx.font = lastFontStyle;
   }
 
   public renderDiagnosticBackground({ ctx, width, font }: Editor) {
@@ -392,13 +348,13 @@ export class Model {
   }
 
   public renderGuides({ ctx, font, letterWidth, theme }: Editor) {
-    if (!this.cachedLineGuide) {
+    if (!this._cachedLineGuide) {
       return;
     }
 
     ctx.fillStyle = theme.guide;
 
-    for (let i = 0; i < this.cachedLineGuide; i++) {
+    for (let i = 0; i < this._cachedLineGuide; i++) {
       ctx.fillRect(
         this.gutterWidth + letterWidth * (2 * i),
         0,
@@ -408,13 +364,126 @@ export class Model {
     }
   }
 
+  public _hook(editor: Editor) {
+    const update = () => {
+      const { state, font } = editor;
+
+      let foldedLines: [number, number][] = [];
+      if (state.autoFoldLines > 0) {
+        foldedLines = [
+          // @TODO: Handle empty lines maybe
+          // [17 - 1, 19 - 1],
+          // [23 - 1, 25 - 1],
+          // [25 - 1, 27 - 1],
+          [19 - 1, 23 - 1],
+          [43 - 1, 62 - 1],
+          [62 - 1, 95 - 1],
+          [97 - 1, 120 - 1],
+          [122 - 1, 132 - 1],
+          [134 - 1, 151 - 1],
+          [153 - 1, 227 - 1],
+          [229 - 1, 235 - 1],
+          [237 - 1, 264 - 1],
+        ];
+      }
+      let lastSkipped!: number;
+
+      // if (linesCache) {
+      //   state.lines = linesCache;
+      // } else {
+      state.lines = [];
+      state.height = 0;
+      // }
+
+      // if (!linesCache) {
+      // Prepare tokens
+      tokenLoop:
+      for (const rowRaw in this.tokens) {
+        const row = parseInt(rowRaw);
+        const line = this.tokens[row];
+
+        for (const folds of foldedLines) {
+          if (!(row <= folds[0] || row >= folds[1])) {
+            lastSkipped = row;
+
+            continue tokenLoop;
+          }
+        }
+
+        const lastWasSkippedLine = lastSkipped != null && lastSkipped + 1 === row;
+
+        if (lastWasSkippedLine) {
+          // @TODO: Push all shrinked lines
+          const lineHeight = font.lineHeight * 1.5;
+          state.lines.push(new LinesShrink(row, [], lineHeight));
+          state.height += lineHeight;
+        }
+
+        const lineHeight = font.lineHeight;
+        state.lines.push(new Line(row, line, lineHeight));
+        state.height += lineHeight;
+      }
+
+      state.height -= state.lines[state.lines.length - 1].height;
+
+      // linesCache = state.lines;
+      // }
+
+      console.log('Updated');
+    }
+
+    editor.events.on('input', (event) => {
+      if (event.type !== 'keydown') {
+        return;
+      }
+
+      if (event.key !== 'Alt') {
+        return;
+      }
+
+      editor.state.autoFoldLines = 1;
+
+      function resetHandler() {
+        editor.state.autoFoldLines = 0;
+        window.removeEventListener('keyup', handler);
+
+        update();
+        editor.renderModel();
+      }
+
+      function handler(e: KeyboardEvent) {
+        if (e.type !== 'keyup') {
+          return;
+        }
+
+        if (e.key !== 'Alt') {
+          return;
+        }
+
+        resetHandler();
+      }
+
+      window.addEventListener('keyup', handler, false);
+      window.addEventListener('blur', resetHandler, false);
+
+      update();
+    });
+
+    this.events.on('update', update);
+
+    update();
+  }
+
   private updateTokens() {
     const code = this.text.join('\n');
     const rawTokens = tokenize(code, typescript) as any;
 
+    linesCache = undefined;
     this.tokens = normalizeTokens(rawTokens)
       // @TODO: Normalize this beforehand.
       .map((row) => row.filter((t) => !t.empty && !!t.content));
+
+    this.events.emit('update');
 
     // const errors = code ? typecheck(code) : [];
 

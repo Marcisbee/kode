@@ -1,6 +1,6 @@
 import type { Model } from '../model';
 
-import type { EditorPluginConfig } from './types';
+import type { EditorPlugin } from './types';
 
 export function selectedIdentifier({ text, selections }: Model): string | void {
   if (selections[0].end) {
@@ -43,38 +43,38 @@ export function selectedIdentifier({ text, selections }: Model): string | void {
   return word;
 }
 
-export function selectedIdentifierPlugin(): EditorPluginConfig {
-  return {
-    model({ ctx, font, model, letterWidth, theme }) {
+export function selectedIdentifierPlugin(): EditorPlugin {
+  return (editor) => {
+    editor.events.on('model', (token, col) => {
+      const { ctx, font, model, letterWidth, theme } = editor;
+
       const identifier = selectedIdentifier(model);
 
       if (!identifier) {
         return;
       }
 
-      return (token, col) => {
-        if (token.types.indexOf('keyword') > -1) {
-          return;
-        }
+      if (token.types.indexOf('keyword') > -1) {
+        return;
+      }
 
-        if (token.types.indexOf('string') > -1) {
-          return;
-        }
+      if (token.types.indexOf('string') > -1) {
+        return;
+      }
 
-        if (token.content.trim() !== identifier) {
-          return;
-        }
+      if (token.content.trim() !== identifier) {
+        return;
+      }
 
-        const leadingSpace = token.content.replace(/[^ \t].*$/, '');
+      const leadingSpace = token.content.replace(/[^ \t].*$/, '');
 
-        ctx.fillStyle = theme['match-identifier'];
-        ctx.fillRect(
-          model.gutterWidth + letterWidth * (col + leadingSpace.length),
-          0,
-          letterWidth * token.content.trim().length,
-          font.lineHeight
-        );
-      };
-    },
+      ctx.fillStyle = theme['match-identifier'];
+      ctx.fillRect(
+        model.gutterWidth + letterWidth * (col + leadingSpace.length),
+        0,
+        letterWidth * token.content.trim().length,
+        font.lineHeight
+      );
+    });
   };
 }

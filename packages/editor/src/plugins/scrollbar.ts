@@ -1,4 +1,4 @@
-import type { EditorPluginConfig } from './types';
+import type { EditorPlugin } from './types';
 
 function roundRect(
   ctx: CanvasRenderingContext2D,
@@ -25,9 +25,11 @@ function roundRect(
 const barWidth = 8;
 const barMargin = 4;
 
-export function scrollbarPlugin(): EditorPluginConfig {
-  return {
-    editor({ ctx, state, height, scroll, width, theme }) {
+export function scrollbarPlugin(): EditorPlugin {
+  return (editor) => {
+    editor.events.on('render', () => {
+      const { ctx, state, height, scroll, width, theme } = editor;
+
       return () => {
         const { height: modelHeight } = state;
 
@@ -38,7 +40,7 @@ export function scrollbarPlugin(): EditorPluginConfig {
 
         // ctx.fillStyle = 'orange';
         // ctx.fillText(
-        //   JSON.stringify({ visiblePercentage }),
+        //   JSON.stringify({ height }),
         //   500,
         //   20,
         // );
@@ -68,6 +70,6 @@ export function scrollbarPlugin(): EditorPluginConfig {
           barWidth / 2,
         );
       }
-    },
+    });
   };
 }

@@ -1,3 +1,4 @@
+import { Token } from './lexer/normalize-tokens';
 import { Line, LinesShrink, Model, ModelSelection } from './model';
 import { autoClosePlugin } from './plugins/auto-close';
 import { footerPlugin } from './plugins/footer';
@@ -6,15 +7,11 @@ import { preserveIndent } from './plugins/preserve-indent';
 import { scrollbarPlugin } from './plugins/scrollbar';
 import { selectedIdentifierPlugin } from './plugins/selected-identifier';
 import { selectedLinePlugin } from './plugins/selected-line';
+// import { statsPlugin } from './plugins/stats';
 import { tabPlugin } from './plugins/tab';
-import type {
-  EditorPlugin,
-  EditorPluginConfig,
-  InputPlugin,
-  ModelPlugin,
-} from './plugins/types';
+import type { EditorPlugin } from './plugins/types';
 import { AtomOneDark } from './themes/atom-one-dark';
-import { createInput, getRowByTop } from './utils';
+import { createEvents, createInput, Emitter, getRowByTop } from './utils';
 
 interface EditorFontConfig {
   size: number;
@@ -32,7 +29,7 @@ export interface EditorRenderState {
   [key: string]: any;
 };
 
-export const recommendedPlugins: EditorPluginConfig[] = [
+export const recommendedPlugins: EditorPlugin[] = [
   selectedLinePlugin(),
   footerPlugin(),
   selectedIdentifierPlugin(),
@@ -41,32 +38,36 @@ export const recommendedPlugins: EditorPluginConfig[] = [
   tabPlugin(),
   preserveIndent(),
   scrollbarPlugin(),
+  // statsPlugin(),
 ];
+
+interface EditorEvents {
+  render(): void;
+  model(value: Token, col: number, row: number): void;
+  input(e: KeyboardEvent): void;
+}
 
 export class Editor {
   public scroll: number = 0;
   public input: HTMLInputElement;
 
-  public editorPlugins: EditorPlugin[] = [];
-  public modelPlugins: ModelPlugin[] = [];
-  public inputPlugins: InputPlugin[] = [];
-
   public canvas!: HTMLCanvasElement;
-  private offScreenCanvas = document.createElement('canvas');
-  private realCtx: CanvasRenderingContext2D;
-  public ctx = this.offScreenCanvas.getContext('2d')!;
+  private _offScreenCanvas = document.createElement('canvas');
+  private _realCtx: CanvasRenderingContext2D;
+  public ctx = this._offScreenCanvas.getContext('2d')!;
 
   public letterWidth: number;
   public readonly height!: number;
   public readonly width!: number;
 
   public state!: EditorRenderState;
+  public events: Emitter<EditorEvents> = createEvents<EditorEvents>();
 
   constructor(
     public container: HTMLElement,
     public model = new Model(['']),
     public theme: Record<string, string> = AtomOneDark,
-    public plugins: EditorPluginConfig[] = recommendedPlugins.slice(),
+    public plugins: EditorPlugin[] = recommendedPlugins.slice(),
     public font: EditorFontConfig = {
       size: 12,
       family: '"Menlo", monospace',
@@ -94,50 +95,35 @@ export class Editor {
     label.appendChild(this.canvas);
     container.appendChild(label);
 
-    this.editorPlugins = plugins
-      .map(({ editor }) => editor)
-      .filter(Boolean) as any;
-    this.modelPlugins = plugins
-      .map(({ model }) => model)
-      .filter(Boolean) as any;
-    this.inputPlugins = plugins
-      .map(({ input }) => input?.(this))
-      .filter(Boolean) as any;
-
     this.ctx.font = `${font.size}px ${font.family}`;
     const measurements = this.ctx.measureText('M');
 
     this.letterWidth = measurements.width;
 
-    this.realCtx = this.canvas.getContext('2d')!;
+    this._realCtx = this.canvas.getContext('2d')!;
     this.input = createInput(this);
 
+    this.model._hook(this);
+
+    // Initialize plugins
+    this.plugins
+      .filter(Boolean)
+      .map((fn) => fn?.(this));
+
     // this.canvas.style.letterSpacing = '0px';
-    // this.offScreenCanvas.style.letterSpacing = '0px';
+    // this._offScreenCanvas.style.letterSpacing = '0px';
 
     this.input.addEventListener('keydown', this.onInput, false);
 
     window.addEventListener('resize', this.onResize, false);
     window.addEventListener('orientationchange', this.onResize, false);
 
-    function debounceRaf(fn: (e: Event) => void) {
-      let timeout: number;
-
-      return (e: Event) => {
-        e.preventDefault();
-
-        // If there's a timer, cancel it
-        if (timeout) {
-          window.cancelAnimationFrame(timeout);
-        }
-
-        // Setup the new requestAnimationFrame()
-        timeout = window.requestAnimationFrame(() => fn(e));
-      }
-    }
-
-    this.canvas.addEventListener('mousewheel', debounceRaf(this.onWheel), false);
-    this.canvas.addEventListener('mousedown', this.onMouseDown, false);
+    this.container.addEventListener('mousewheel', (e) => e.preventDefault(), true);
+    this.canvas.addEventListener('mousewheel', this.onWheel, {
+      capture: false,
+      passive: true
+    });
+    this.canvas.addEventListener('mousedown', this.onMouseDown);
 
     this.onResize();
   }
@@ -153,16 +139,16 @@ export class Editor {
 
     this.canvas.width = wRatio;
     this.canvas.height = hRatio;
-    this.offScreenCanvas.width = wRatio;
-    this.offScreenCanvas.height = hRatio;
+    this._offScreenCanvas.width = wRatio;
+    this._offScreenCanvas.height = hRatio;
 
     this.canvas.style.width = `${w}px`;
     this.canvas.style.height = `${h}px`;
-    this.offScreenCanvas.style.width = `${w}px`;
-    this.offScreenCanvas.style.height = `${h}px`;
+    this._offScreenCanvas.style.width = `${w}px`;
+    this._offScreenCanvas.style.height = `${h}px`;
 
     this.ctx.scale(devicePixelRatio, devicePixelRatio);
-    this.realCtx.scale(devicePixelRatio, devicePixelRatio);
+    this._realCtx.scale(devicePixelRatio, devicePixelRatio);
 
     this.renderModel();
   };
@@ -170,16 +156,14 @@ export class Editor {
   private onInput = (e: KeyboardEvent) => {
     e.preventDefault();
 
-    this.updateCaret();
-
-    for (const pluginEnd of this.inputPlugins) {
-      pluginEnd!(e);
-    }
+    this.events.emit('input', e);
 
     this.renderModel();
   };
 
   private onWheel = (e: any) => {
+    // e.preventDefault();
+
     const previousScroll = this.scroll;
     const scrollLimit = this.state.height;
 
@@ -257,7 +241,6 @@ export class Editor {
         selection.end = undefined;
       }
 
-      this.updateCaret();
       this.renderModel();
     };
 
@@ -273,14 +256,6 @@ export class Editor {
     window.addEventListener('mouseup', onMouseUp, false);
   };
 
-  private updateCaret() {
-    const i = this.input;
-    const anim = i.style.animation;
-    i.style.animation = 'none';
-    i.offsetHeight; /* trigger reflow */
-    i.style.animation = anim;
-  }
-
   private resetState() {
     this.state = {
       autoFoldLines: 0,
@@ -293,11 +268,10 @@ export class Editor {
   public renderModel() {
     const {
       ctx,
-      realCtx,
-      editorPlugins,
+      _realCtx,
+      _offScreenCanvas,
       model,
       canvas,
-      offScreenCanvas,
     } = this;
 
     ctx.fillStyle = this.theme.bg;
@@ -306,7 +280,7 @@ export class Editor {
     ctx.save();
     ctx.translate(0, -this.scroll);
 
-    const plugins = editorPlugins.map((fn) => fn(this)).filter(Boolean);
+    const plugins = this.events.emit('render').filter(Boolean);
 
     model.render(this);
 
@@ -316,12 +290,12 @@ export class Editor {
       pluginEnd!();
     }
 
-    realCtx.drawImage(
-      offScreenCanvas,
+    _realCtx.drawImage(
+      _offScreenCanvas,
       0,
       0,
-      offScreenCanvas.width / devicePixelRatio,
-      offScreenCanvas.height / devicePixelRatio
+      _offScreenCanvas.width / devicePixelRatio,
+      _offScreenCanvas.height / devicePixelRatio
     );
   }
 }
