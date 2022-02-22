@@ -13,6 +13,7 @@
     "desktop": "turbo run desktop"
   },
   "devDependencies": {
+    "@ryusei/light": "^1.2.0",
     "@types/node": "^17.0.18",
     "esbuild": "^0.14.23",
     "turbo": "^1.1.3",

@@ -1,7 +1,9 @@
+import { Lexer, typescript as ts } from '@ryusei/light';
+
 import type { Editor } from './editor';
-import { tokenize } from './lexer/prism';
-import { typescript } from './lexer/languages/typescript';
-import { type Token, normalizeTokens } from './lexer/normalize-tokens';
+// import { tokenize } from './lexer/prism';
+// import { typescript } from './lexer/languages/typescript';
+// import { type Token, normalizeTokens } from './lexer/normalize-tokens';
 import { createEvents, Emitter, getLinePosition } from './utils';
 // import { typecheck } from './lsp/typescript';
 
@@ -35,6 +37,9 @@ export interface ModelDiagnostic {
     y: number;
   };
 }
+
+// @TODO: Proper type this
+type Token = any;
 
 export class Line {
   constructor(
@@ -198,6 +203,8 @@ export class Model {
 
   public events: Emitter<ModelEvents> = createEvents<ModelEvents>();
 
+  private _lexer = new Lexer(ts());
+
   constructor(
     public text: string[] = [''],
     public selections: ModelSelection[] = [
@@ -314,13 +321,13 @@ export class Model {
 
         const tokens = this.tokens[row];
 
-        const firstToken = tokens?.[0];
-        if (firstToken?.content) {
+        const [firstTokenType, firstToken] = tokens?.[0] || [];
+        if (firstTokenType !== 'lb') {
           this._cachedLineGuide = 0;
         }
 
-        if (firstToken?.content.startsWith(' ') || firstToken?.content.startsWith('\t')) {
-          this._cachedLineGuide = Math.ceil(firstToken.content.replace(/[^ \t].*$/, '').length / 2);
+        if (firstTokenType === 'space') {
+          this._cachedLineGuide = Math.ceil(firstToken.replace(/[^ \t].*$/, '').length / 2);
         }
 
         this.renderGuides(editor);
@@ -374,21 +381,25 @@ export class Model {
           //   continue;
           // }
 
-          events.emit('model', token, col, row);
+          // events.emit('model', token, col, row);
 
-          const [type] = token.types.slice(-1);
+          const [type, content] = token;
 
-          ctx.fillStyle = theme[type] || theme.plain;
+          const color = theme[type];
+          if (color) {
+            ctx.fillStyle = color;
+          }
+
           ctx.fillText(
-            token.content,
+            content,
             this.gutterWidth + letterWidth * col,
             2
           );
 
-          col += token.content.length;
+          col += content.length;
 
-          if (!theme[type]) {
-            console.log('unhandled', token, type);
+          if (!color && content.trim()) {
+            console.warn('unhandled', type);
           }
         }
 
@@ -504,11 +515,20 @@ export class Model {
 
   private updateTokens() {
     const code = this.text.join('\n');
-    const rawTokens = tokenize(code, typescript) as any;
 
-    this.tokens = normalizeTokens(rawTokens)
-      // @TODO: Normalize this beforehand.
-      .map((row) => row.filter((t) => !t.empty && !!t.content));
+    // console.time('Prism');
+    // const rawTokens = tokenize(code, typescript) as any;
+
+    // this.tokens = normalizeTokens(rawTokens)
+    //   // @TODO: Normalize this beforehand.
+    //   .map((row) => row.filter((t) => !t.empty && !!t.content));
+    // console.timeEnd('Prism');
+
+    console.time('Lexer');
+    this.tokens = this._lexer.tokenize(code);
+    console.timeEnd('Lexer');
+
+    // console.log(tokens);
 
     this.events.emit('update', code);
   }
