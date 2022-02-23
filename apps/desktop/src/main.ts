@@ -1,10 +1,12 @@
 import {
   Editor,
   Model,
+  recommendedPlugins,
 } from 'editor';
 import 'editor/src/style.css';
 
 import './assets/editor.css';
+import { filesPlugin } from './files';
 
 const editor = document.querySelector<HTMLDivElement>('#editor')!;
 
@@ -284,11 +286,25 @@ export class Editor {
 }
 `.split('\n'));
 
-new Editor(editor, model);
+new Editor(
+  editor,
+  model,
+  undefined,
+  [
+    ...recommendedPlugins,
+    filesPlugin(),
+  ],
+);
 
 // @ts-ignore
 Neutralino.init();
 
-// Neutralino.events.on('ready', () => {
-//   Neutralino.os.showMessageBox('Welcome', 'Hello Neutralinojs');
+// Neutralino.events.on('ready', async () => {
+//   try {
+//     let entries = await Neutralino.filesystem.readDirectory(NL_PATH);
+//     console.log('Content: ', entries);
+//   } catch (e) {
+//     console.error(e);
+//   }
+// //   Neutralino.os.showMessageBox('Welcome', 'Hello Neutralinojs');
 // });
