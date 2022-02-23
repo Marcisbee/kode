@@ -302,8 +302,8 @@ export class Editor {
       _offScreenCanvas,
       0,
       0,
-      canvas.width,
-      canvas.height,
+      canvas.width / devicePixelRatio,
+      canvas.height / devicePixelRatio,
     );
   }
 }
