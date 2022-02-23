@@ -47,6 +47,11 @@ interface EditorEvents {
   input(e: KeyboardEvent): void;
 }
 
+const canvasSettings: CanvasRenderingContext2DSettings = {
+  alpha: false,
+  // colorSpace: 'display-p3',
+};
+
 export class Editor {
   public scroll: number = 0;
   public input: HTMLInputElement;
@@ -54,7 +59,7 @@ export class Editor {
   public canvas!: HTMLCanvasElement;
   private _offScreenCanvas = document.createElement('canvas');
   private _realCtx: CanvasRenderingContext2D;
-  public ctx = this._offScreenCanvas.getContext('2d', { alpha: false })!;
+  public ctx = this._offScreenCanvas.getContext('2d', canvasSettings)!;
 
   public letterWidth: number;
   public readonly height!: number;
@@ -107,7 +112,7 @@ export class Editor {
     // this.canvas.style.letterSpacing = '0px';
     // this._offScreenCanvas.style.letterSpacing = '0px';
 
-    this._realCtx = this.canvas.getContext('2d', { alpha: false })!;
+    this._realCtx = this.canvas.getContext('2d', canvasSettings)!;
     this.input = createInput(this);
 
     this.model._hook(this);
@@ -293,10 +298,6 @@ export class Editor {
       plugins[i]!();
     }
 
-    _realCtx.drawImage(
-      _offScreenCanvas,
-      0,
-      0,
-    );
+    _realCtx.drawImage(_offScreenCanvas, 0, 0);
   }
 }

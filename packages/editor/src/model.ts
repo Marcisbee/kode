@@ -57,11 +57,16 @@ export class Line implements LineRenderer {
         //   ctx.fillStyle = theme.hidden;
         //   ctx.fillText(
         //     '↵',
-        //     this.gutterWidth + letterWidth * col,
+        //     model.gutterWidth + letterWidth * col,
         //     2
         //   );
         // }
 
+        continue;
+      }
+
+      if (type === 'space') {
+        col += content.length;
         continue;
       }
 
@@ -103,7 +108,7 @@ export class LinesShrink implements LineRenderer {
       this.height,
     );
 
-    ctx.fillStyle = theme.punctuation;
+    ctx.fillStyle = 'black';
     ctx.fillText(
       '...',
       50 + 30,
@@ -458,7 +463,7 @@ export class Model {
 
     const lastFontStyle = ctx.font;
 
-    ctx.fillStyle = theme.punctuation;
+    ctx.fillStyle = theme['line-number'];
     ctx.font = `${font.size * 0.9}px ${font.family}`;
     ctx.textAlign = 'right';
     ctx.fillText(
