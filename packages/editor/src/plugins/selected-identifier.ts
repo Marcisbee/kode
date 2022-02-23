@@ -20,7 +20,9 @@ export function selectedIdentifier({ text, selections }: Model): string | void {
   const after = line.substring(x);
 
   let word = '';
-  for (const char of after) {
+  for (let i = 0; i < after.length; i++) {
+    const char = after[i];
+
     if (!/\w/.test(char)) {
       break;
     }
@@ -28,7 +30,9 @@ export function selectedIdentifier({ text, selections }: Model): string | void {
     word += char;
   }
 
-  for (const char of before) {
+  for (let i = 0; i < before.length; i++) {
+    const char = before[i];
+
     if (!/\w/.test(char)) {
       break;
     }
@@ -45,7 +49,7 @@ export function selectedIdentifier({ text, selections }: Model): string | void {
 
 export function selectedIdentifierPlugin(): EditorPlugin {
   return (editor) => {
-    editor.events.on('model', (token, col) => {
+    editor.events.on('model', ([tokenType, tokenContent], col) => {
       const { ctx, font, model, letterWidth, theme } = editor;
 
       const identifier = selectedIdentifier(model);
@@ -54,25 +58,27 @@ export function selectedIdentifierPlugin(): EditorPlugin {
         return;
       }
 
-      if (token.types.indexOf('keyword') > -1) {
+      if (tokenType === 'keyword') {
         return;
       }
 
-      if (token.types.indexOf('string') > -1) {
+      if (tokenType === 'string') {
         return;
       }
 
-      if (token.content.trim() !== identifier) {
+      const trimmed = tokenContent.trim();
+
+      if (trimmed !== identifier) {
         return;
       }
 
-      const leadingSpace = token.content.replace(/[^ \t].*$/, '');
+      const leadingSpace = tokenContent.replace(/[^ \t].*$/, '');
 
       ctx.fillStyle = theme['match-identifier'];
       ctx.fillRect(
         model.gutterWidth + letterWidth * (col + leadingSpace.length),
         0,
-        letterWidth * token.content.trim().length,
+        letterWidth * trimmed.length,
         font.lineHeight
       );
     });

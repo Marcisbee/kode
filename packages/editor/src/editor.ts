@@ -1,4 +1,4 @@
-import type { Token } from './lexer/normalize-tokens';
+import type { Token } from './lexer';
 import { Line, LinesShrink, Model, ModelSelection } from './model';
 import { autoClosePlugin } from './plugins/auto-close';
 import { footerPlugin } from './plugins/footer';
@@ -289,8 +289,8 @@ export class Editor {
 
     ctx.restore();
 
-    for (const pluginEnd of plugins) {
-      pluginEnd!();
+    for (let i = 0; i < plugins.length; i++) {
+      plugins[i]!();
     }
 
     _realCtx.drawImage(

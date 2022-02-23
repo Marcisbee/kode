@@ -3,7 +3,7 @@ import type { EditorPlugin } from './types';
 export function keyMapPlugin(): EditorPlugin {
   return (editor) => {
     editor.events.on('input', (event) => {
-      const { model, state } = editor;
+      const { model } = editor;
 
       if (event.type !== 'keydown') {
         return;

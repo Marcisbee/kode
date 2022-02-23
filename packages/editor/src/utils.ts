@@ -19,7 +19,8 @@ export function getLinePosition(state: EditorRenderState, row: number): { y: num
   let acc = 0;
   let lastLine: Line | LinesShrink | undefined;
 
-  for (const line of state.lines) {
+  for (let i = 0; i < state.lines.length; i++) {
+    const line = state.lines[i];
     lastLine = line;
 
     if (line.row >= row) {
@@ -42,7 +43,8 @@ export function getLinePosition(state: EditorRenderState, row: number): { y: num
 export function getRowByTop(state: EditorRenderState, top: number): number | void {
   let height = 0;
 
-  for (const line of state.lines) {
+  for (let i = 0; i < state.lines.length; i++) {
+    const line = state.lines[i];
     height += line.height;
 
     if (height >= top) {

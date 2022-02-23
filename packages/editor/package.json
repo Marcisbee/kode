@@ -9,7 +9,6 @@
     "build": "node scripts/build"
   },
   "devDependencies": {
-    "@types/prismjs": "^1.26.0",
     "stats.js": "^0.17.0",
     "tsconfig": "*"
   }

@@ -1,9 +1,5 @@
-import { Lexer, typescript as ts } from '@ryusei/light';
-
 import type { Editor } from './editor';
-// import { tokenize } from './lexer/prism';
-// import { typescript } from './lexer/languages/typescript';
-// import { type Token, normalizeTokens } from './lexer/normalize-tokens';
+import { type Token, Lexer, typescript } from './lexer';
 import { createEvents, Emitter, getLinePosition } from './utils';
 // import { typecheck } from './lsp/typescript';
 
@@ -37,9 +33,6 @@ export interface ModelDiagnostic {
     y: number;
   };
 }
-
-// @TODO: Proper type this
-type Token = any;
 
 export class Line {
   constructor(
@@ -94,14 +87,13 @@ function squashPlugin(editor: Editor) {
 
     // Prepare tokens
     tokenLoop:
-    for (const rowRaw in tokens) {
-      const row = parseInt(rowRaw);
+    for (let row = 0; row < tokens.length; row++) {
       const line = tokens[row];
 
-      for (const folds of foldedLines) {
+      for (let i = 0; i < foldedLines.length; i++) {
+        const folds = foldedLines[i];
         if (!(row <= folds[0] || row >= folds[1])) {
           lastSkipped = row;
-
           continue tokenLoop;
         }
       }
@@ -203,7 +195,7 @@ export class Model {
 
   public events: Emitter<ModelEvents> = createEvents<ModelEvents>();
 
-  private _lexer = new Lexer(ts());
+  private _lexer = new Lexer(typescript());
 
   constructor(
     public text: string[] = [''],
@@ -254,7 +246,8 @@ export class Model {
     state.position = 0;
 
     // Render
-    for (const line of state.lines) {
+    for (let lineIndex = 0; lineIndex < state.lines.length; lineIndex++) {
+      const line = state.lines[lineIndex];
       const { row } = line;
       let col = 0;
 
@@ -292,7 +285,9 @@ export class Model {
         if (this.selections.length > 0) {
           ctx.fillStyle = theme.selection;
 
-          for (const { start, end } of this.selections) {
+          for (let selectionIndex = 0; selectionIndex < this.selections.length; selectionIndex++) {
+            const { start, end } = this.selections[selectionIndex];
+
             if (!end) {
               continue;
             }
@@ -336,7 +331,9 @@ export class Model {
 
         ctx.fillStyle = 'rgba(255,50,50,0.2)';
 
-        for (const { start, end } of diagnosticErrors) {
+        for (let diagnosticIndex = 0; diagnosticIndex < diagnosticErrors.length; diagnosticIndex++) {
+          const { start, end } = diagnosticErrors[diagnosticIndex];
+
           if (!end) {
             continue;
           }
@@ -365,7 +362,8 @@ export class Model {
         this.renderLineNumber(editor, col, row);
         resetFontOptions();
 
-        for (const token of tokens) {
+        for (let tokenIndex = 0; tokenIndex < tokens.length; tokenIndex++) {
+          const token = tokens[tokenIndex];
           const [type, content] = token;
 
           if (type === 'lb') {
@@ -381,7 +379,7 @@ export class Model {
             continue;
           }
 
-          // events.emit('model', token, col, row);
+          events.emit('model', token, col, row);
 
           const color = theme[type];
           if (color && type !== 'space') {
@@ -403,7 +401,9 @@ export class Model {
 
         ctx.fillStyle = theme.diagnosticError;
 
-        for (const { message, start, end } of diagnosticErrors) {
+        for (let diagnosticIndex = 0; diagnosticIndex < diagnosticErrors.length; diagnosticIndex++) {
+          const { message, start, end } = diagnosticErrors[diagnosticIndex];
+
           if (!end) {
             continue;
           }
@@ -514,19 +514,9 @@ export class Model {
   private updateTokens() {
     const code = this.text.join('\n');
 
-    // console.time('Prism');
-    // const rawTokens = tokenize(code, typescript) as any;
-
-    // this.tokens = normalizeTokens(rawTokens)
-    //   // @TODO: Normalize this beforehand.
-    //   .map((row) => row.filter((t) => !t.empty && !!t.content));
-    // console.timeEnd('Prism');
-
     console.time('Lexer');
     this.tokens = this._lexer.tokenize(code);
     console.timeEnd('Lexer');
-
-    // console.log(tokens);
 
     this.events.emit('update', code);
   }
