@@ -366,27 +366,25 @@ export class Model {
         resetFontOptions();
 
         for (const token of tokens) {
-          // if (token.type === 'LineTerminatorSequence') {
-          //   if (RENDER_HIDDEN) {
-          //     ctx.fillStyle = THEME.HIDDEN;
-          //     ctx.fillText(
-          //       '↵',
-          //       this.gutterWidth + letterWidth * col,
-          //       2
-          //     );
-          //   }
-          //   col = 0;
-          //   row += 1;
+          const [type, content] = token;
 
-          //   continue;
-          // }
+          if (type === 'lb') {
+            // if (RENDER_HIDDEN) {
+            //   ctx.fillStyle = theme.hidden;
+            //   ctx.fillText(
+            //     '↵',
+            //     this.gutterWidth + letterWidth * col,
+            //     2
+            //   );
+            // }
+
+            continue;
+          }
 
           // events.emit('model', token, col, row);
 
-          const [type, content] = token;
-
           const color = theme[type];
-          if (color) {
+          if (color && type !== 'space') {
             ctx.fillStyle = color;
           }
 

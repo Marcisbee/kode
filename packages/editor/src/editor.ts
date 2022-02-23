@@ -54,7 +54,7 @@ export class Editor {
   public canvas!: HTMLCanvasElement;
   private _offScreenCanvas = document.createElement('canvas');
   private _realCtx: CanvasRenderingContext2D;
-  public ctx = this._offScreenCanvas.getContext('2d')!;
+  public ctx = this._offScreenCanvas.getContext('2d', { alpha: false })!;
 
   public letterWidth: number;
   public readonly height!: number;
@@ -100,7 +100,14 @@ export class Editor {
 
     this.letterWidth = measurements.width;
 
-    this._realCtx = this.canvas.getContext('2d')!;
+    this.container.style.textRendering = 'optimizeSpeed';
+    this._offScreenCanvas.style.textRendering = 'optimizeSpeed';
+    this.canvas.style.textRendering = 'optimizeSpeed';
+
+    // this.canvas.style.letterSpacing = '0px';
+    // this._offScreenCanvas.style.letterSpacing = '0px';
+
+    this._realCtx = this.canvas.getContext('2d', { alpha: false })!;
     this.input = createInput(this);
 
     this.model._hook(this);
@@ -109,9 +116,6 @@ export class Editor {
     this.plugins
       .filter(Boolean)
       .map((fn) => fn?.(this));
-
-    // this.canvas.style.letterSpacing = '0px';
-    // this._offScreenCanvas.style.letterSpacing = '0px';
 
     this.input.addEventListener('keydown', this.onInput, false);
 
@@ -161,13 +165,11 @@ export class Editor {
     this.renderModel();
   };
 
-  private onWheel = (e: any) => {
-    // e.preventDefault();
-
+  private onWheel = (e: Event) => {
     const previousScroll = this.scroll;
     const scrollLimit = this.state.height;
 
-    this.scroll = Math.min(scrollLimit, Math.max(0, this.scroll + e.deltaY));
+    this.scroll = Math.min(scrollLimit, Math.max(0, this.scroll + (e as WheelEvent).deltaY));
 
     if (this.scroll === previousScroll) {
       return;
@@ -205,7 +207,8 @@ export class Editor {
 
       const x = Math.min(
         text[y]?.length || text[text.length - 1].length,
-        Math.max(0, Math.round((e.offsetX - gutterWidth) / this.letterWidth))
+        // ~~ is faster Math.round
+        Math.max(0, ~~ ((e.offsetX - gutterWidth) / this.letterWidth))
       );
 
       if (initialX === undefined && initialY === undefined) {
@@ -294,8 +297,6 @@ export class Editor {
       _offScreenCanvas,
       0,
       0,
-      _offScreenCanvas.width / devicePixelRatio,
-      _offScreenCanvas.height / devicePixelRatio
     );
   }
 }
