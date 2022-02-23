@@ -34,20 +34,82 @@ export interface ModelDiagnostic {
   };
 }
 
-export class Line {
+interface LineRenderer {
+  height: number;
+
+  draw(editor: Editor, col: number): void;
+}
+
+export class Line implements LineRenderer {
   constructor(
     public row: number,
     public tokens: Token[],
     public height: number,
   ) { }
+
+  public draw({ events, ctx, theme, model, letterWidth }: Editor, col: number) {
+    for (let tokenIndex = 0; tokenIndex < this.tokens.length; tokenIndex++) {
+      const token = this.tokens[tokenIndex];
+      const [type, content] = token;
+
+      if (type === 'lb') {
+        // if (RENDER_HIDDEN) {
+        //   ctx.fillStyle = theme.hidden;
+        //   ctx.fillText(
+        //     '↵',
+        //     this.gutterWidth + letterWidth * col,
+        //     2
+        //   );
+        // }
+
+        continue;
+      }
+
+      events.emit('model', token, col, this.row);
+
+      const color = theme[type];
+      if (color && type !== 'space') {
+        ctx.fillStyle = color;
+      }
+
+      ctx.fillText(
+        content,
+        model.gutterWidth + letterWidth * col,
+        2
+      );
+
+      col += content.length;
+
+      if (!color && content.trim()) {
+        console.warn('unhandled', type);
+      }
+    }
+  }
 }
 
-export class LinesShrink {
+export class LinesShrink implements LineRenderer {
   constructor(
     public row: number,
     public tokens: Token[][],
     public height: number,
   ) { }
+
+  public draw({ ctx, width, theme }: Editor) {
+    ctx.fillStyle = 'rgba(0,0,0,0.15)';
+    ctx.fillRect(
+      0,
+      0,
+      width,
+      this.height,
+    );
+
+    ctx.fillStyle = theme.punctuation;
+    ctx.fillText(
+      '...',
+      50 + 30,
+      0,
+    );
+  }
 }
 
 interface ModelEvents {
@@ -222,7 +284,7 @@ export class Model {
   }
 
   public render(editor: Editor) {
-    const { events, state, ctx, font, input, scroll, letterWidth, theme } = editor;
+    const { state, ctx, font, input, scroll, letterWidth, theme } = editor;
 
     const startX = this.selections[0].start.x;
     const startY = this.selections[0].start.y;
@@ -259,20 +321,7 @@ export class Model {
 
       if (line instanceof LinesShrink) {
         if (shouldRender) {
-          ctx.fillStyle = 'rgba(0,0,0,0.15)';
-          ctx.fillRect(
-            0,
-            0,
-            editor.width,
-            line.height,
-          );
-
-          ctx.fillStyle = theme.punctuation;
-          ctx.fillText(
-            '...',
-            50 + 30,
-            0,
-          );
+          line.draw(editor);
         }
 
         ctx.translate(0, line.height);
@@ -362,42 +411,7 @@ export class Model {
         this.renderLineNumber(editor, col, row);
         resetFontOptions();
 
-        for (let tokenIndex = 0; tokenIndex < tokens.length; tokenIndex++) {
-          const token = tokens[tokenIndex];
-          const [type, content] = token;
-
-          if (type === 'lb') {
-            // if (RENDER_HIDDEN) {
-            //   ctx.fillStyle = theme.hidden;
-            //   ctx.fillText(
-            //     '↵',
-            //     this.gutterWidth + letterWidth * col,
-            //     2
-            //   );
-            // }
-
-            continue;
-          }
-
-          events.emit('model', token, col, row);
-
-          const color = theme[type];
-          if (color && type !== 'space') {
-            ctx.fillStyle = color;
-          }
-
-          ctx.fillText(
-            content,
-            this.gutterWidth + letterWidth * col,
-            2
-          );
-
-          col += content.length;
-
-          if (!color && content.trim()) {
-            console.warn('unhandled', type);
-          }
-        }
+        line.draw(editor, col);
 
         ctx.fillStyle = theme.diagnosticError;
 
