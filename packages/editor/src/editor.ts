@@ -298,6 +298,12 @@ export class Editor {
       plugins[i]!();
     }
 
-    _realCtx.drawImage(_offScreenCanvas, 0, 0);
+    _realCtx.drawImage(
+      _offScreenCanvas,
+      0,
+      0,
+      canvas.width,
+      canvas.height,
+    );
   }
 }
