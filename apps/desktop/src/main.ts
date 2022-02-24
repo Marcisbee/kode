@@ -298,12 +298,12 @@ new Editor(
 
 Neutralino.init();
 
-// Neutralino.events.on('ready', async () => {
-//   try {
-//     let entries = await Neutralino.filesystem.readDirectory(NL_PATH);
-//     console.log('Content: ', entries);
-//   } catch (e) {
-//     console.error(e);
-//   }
-// //   Neutralino.os.showMessageBox('Welcome', 'Hello Neutralinojs');
-// });
+Neutralino.events.on('ready', async () => {
+  try {
+    await Neutralino.window.setTitle('Kodē');
+    // await Neutralino.window.setTitle('/private/var/www/private/kode/apps/desktop/neutralino.d.ts');
+  } catch (e) {
+    console.error(e);
+  }
+  // Neutralino.os.showMessageBox('Welcome', 'Hello Neutralinojs');
+});
