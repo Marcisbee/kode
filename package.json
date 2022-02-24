@@ -7,7 +7,6 @@
   ],
   "version": "0.0.0",
   "scripts": {
-    "prepare": "npm run prepare --workspace=kode-desktop",
     "dev": "turbo run dev --parallel",
     "build": "turbo run build",
     "desktop": "turbo run desktop"
