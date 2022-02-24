@@ -212,8 +212,7 @@ export class Editor {
 
       const x = Math.min(
         text[y]?.length || text[text.length - 1].length,
-        // ~~ is faster Math.round
-        Math.max(0, ~~ ((e.offsetX - gutterWidth) / this.letterWidth))
+        Math.max(0, Math.round((e.offsetX - gutterWidth) / this.letterWidth))
       );
 
       if (initialX === undefined && initialY === undefined) {

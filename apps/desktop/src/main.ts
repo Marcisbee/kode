@@ -296,7 +296,6 @@ new Editor(
   ],
 );
 
-// @ts-ignore
 Neutralino.init();
 
 // Neutralino.events.on('ready', async () => {

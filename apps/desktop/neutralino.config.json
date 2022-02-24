@@ -15,7 +15,8 @@
   "nativeAllowList": [
     "app.*",
     "os.*",
-    "filesystem.*"
+    "filesystem.*",
+    "window.*"
   ],
   "globalVariables": {
     "TEST1": "Hello",
