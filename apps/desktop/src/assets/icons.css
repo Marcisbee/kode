@@ -1,0 +1,108 @@
+@font-face {
+	font-family: FontAwesome;
+	font-weight: normal;
+	font-style: normal;
+	src: url('./fonts/fontawesome.woff2');
+}
+
+/* @font-face {
+	font-family: Mfizz;
+	src: url('./fonts/mfixx.woff2');
+	font-weight: normal;
+	font-style: normal;
+}
+
+@font-face {
+	font-family: Devicons;
+	src: url('./fonts/devopicons.woff2');
+	font-weight: normal;
+	font-style: normal;
+} */
+
+@font-face {
+	font-family: file-icons;
+	src: url('./fonts/file-icons.woff2');
+	font-weight: normal;
+	font-style: normal;
+}
+
+.icon:before {
+	font-weight: normal;
+	font-style: normal;
+	text-align: center;
+	width: 14px;
+	line-height: 1;
+	position: relative;
+	display: inline-block;
+  margin-right: 7px;
+	-webkit-font-smoothing: antialiased;
+}
+
+/*============================================================================*
+  Custom file icons
+  See https://github.com/file-icons/icons/blob/master/charmap.md
+/*============================================================================*/
+
+.md-icon:before {
+  font-family: file-icons;
+  font-size: 13px;
+  content: '\E63E';
+}
+
+
+/*============================================================================*
+  Custom file icons
+  See https://github.com/file-icons/icons/blob/master/charmap.md
+/*============================================================================*/
+
+.icon[entry]:before {
+  --font: file-icons;
+  --content: '\EABE';
+  font-family: var(--font);
+  font-size: 13px;
+  content: '\EABE';
+}
+
+.icon[entry="~.json"]:before {
+  font-family: file-icons;
+  font-size: 13px;
+  content: '\EABE';
+}
+.icon[entry="~.md"]:before {
+  font-family: file-icons;
+  font-size: 13px;
+  content: '\F0C9';
+}
+.icon[entry="package.json"]:before {
+  font-family: file-icons;
+  font-size: 13px;
+  content: '\E91C';
+}
+/*
+.yarn-icon:before {
+  font-family: file-icons;
+  font-size: 13px;
+  content: '\EA1A';
+}
+.vue-icon:before {
+  font-family: file-icons;
+  font-size: 13px;
+  content: '\E906';
+} */
+
+
+/*============================================================================*
+  FontAwesome
+  https://fontawesome.com/v4.7.0/cheatsheet/
+/*============================================================================*/
+
+.file-icon:before {
+  font-family: FontAwesome;
+  font-size: 13px;
+  content: '\f1c9';
+}
+.dir-icon:before {
+  font-family: FontAwesome;
+  font-size: 13px;
+  content: '\f07b';
+}

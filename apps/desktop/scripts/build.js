@@ -18,6 +18,9 @@ esbuild
     },
     metafile: true,
     mangleProps: /^_/,
+    loader: {
+      '.woff2': 'file',
+    },
   })
   .then(async (result) => {
     const text = await esbuild.analyzeMetafile(result.metafile);

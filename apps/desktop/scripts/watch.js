@@ -24,6 +24,9 @@ esbuild
         console.log(error ? error : '...');
       },
     },
+    loader: {
+      '.woff2': 'file',
+    },
   })
   .catch((e) => {
     console.log(e);
