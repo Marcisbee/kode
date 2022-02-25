@@ -1,0 +1,41 @@
+#left {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200px;
+  height: 100vh;
+  padding: 20px 0;
+}
+
+#left ul {
+  margin: 0;
+  padding: 0;
+}
+
+#left li {
+  display: block;
+  margin: 0;
+  height: 22px;
+  line-height: 22px;
+  padding: 0 10px 0 20px;
+  cursor: pointer;
+}
+
+#left li:hover {
+  background-color: #2a2c36;
+}
+
+#left li .icon {
+  display: inline-block;
+  vertical-align: top;
+  margin-top: 4px;
+  width: 14px;
+  height: 14px;
+  line-height: 1;
+  margin-right: 7px;
+}
+
+li.list-directory {
+  color: #af87ff;
+  font-weight: 600;
+}

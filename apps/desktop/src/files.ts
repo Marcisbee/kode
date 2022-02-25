@@ -1,9 +1,10 @@
 import { EditorPlugin } from 'editor/src/plugins/types';
 import { h, render } from 'preact';
 import { useState, useEffect } from 'preact/hooks';
-
 import 'icons/dist/icons.css';
-import { mapFile, mapDirectory } from 'icons/map.js';
+import { mapFile, mapDirectory } from 'icons/map';
+
+import './assets/file.css';
 
 const filesContainer = document.getElementById('left')!;
 
@@ -51,6 +52,7 @@ function Files() {
         .sort((a, b) => a.type === 'FILE' ? 1 : -1)
         .map(({ type, entry }) => (
           h('li', {
+            class: `list-${type === 'DIRECTORY' ? 'directory' : 'file'}`,
             onClick: type === 'DIRECTORY' ? () => {
               if (entry === '.') {
                 setPath((p) => p.split('/').slice(0, -1).join('/'));
