@@ -4,6 +4,63 @@ const prefix = require('./prefix');
 const fileMap = {
   'package.json': 'node',
   'package-lock.json': 'node',
+  'yarn.lock': 'yarn',
+  'pnpm-lock.yaml': 'pnpm',
+
+  '.editorconfig': 'editorconfig',
+  '.browserlist': 'browserlist',
+  '.stylelint': 'stylelint',
+  '.eslintrc': 'eslint',
+  '.yarnrc': 'yarn',
+  '.npmrc': 'npm',
+  '.prettierrc': 'prettier',
+
+  'vite.config.js': 'vite',
+  'vite.config.ts': 'vite',
+  'rollup.config.js': 'rollup',
+  'rollup.config.ts': 'rollup',
+  'webpack.config.js': 'webpack',
+  'webpack.config.ts': 'webpack',
+  'tailwind.config.js': 'tailwind',
+  'tailwind.config.ts': 'tailwind',
+
+  '*.story.js': 'storybook',
+  '*.stories.js': 'storybook',
+  '*.story.jsx': 'storybook',
+  '*.stories.jsx': 'storybook',
+  '*.story.ts': 'storybook',
+  '*.stories.ts': 'storybook',
+  '*.story.tsx': 'storybook',
+  '*.stories.tsx': 'storybook',
+
+  '*.jsx': 'jsx',
+  '*.js': 'js',
+  '*.mjs': 'js',
+  '*.cjs': 'js',
+
+  '*.d.ts': 'ts-d',
+  '*.ts': 'ts',
+  '*.mts': 'ts',
+  '*.cts': 'ts',
+
+  '*.marko': 'marko',
+  '*.res': 'rescript',
+  '*.riot': 'riot',
+  '*.svelte': 'svelte',
+
+  '*.html': 'html',
+  '*.css': 'css',
+  '*.sass': 'sass',
+  '*.scss': 'sass',
+  '*.stylus': 'stylus',
+
+  '*.graphql': 'graphql',
+  '*.gql': 'graphql',
+  '*.toml': 'toml',
+  '*.json': 'json',
+  '*.md': 'md',
+  '*.mdx': 'mdx',
+  '*.svg': 'svg',
 };
 
 /**
@@ -11,22 +68,22 @@ const fileMap = {
  * @returns {string}
  */
 function mapFile(fileName) {
-  const exactMatch = fileMap[fileName];
+  for (const query in fileMap) {
+    const isDynamic = query.charAt(0) === '*';
 
-  if (exactMatch) {
-    return exactMatch;
-  }
+    if (!isDynamic && query === fileName) {
+      return fileMap[query];
+    }
 
-  if (fileName.endsWith('.json')) {
-    return 'json';
-  }
+    if (!isDynamic) {
+      continue;
+    }
 
-  if (fileName.endsWith('.md')) {
-    return 'md';
-  }
+    const endMatch = query.substring(1);
 
-  if (fileName.endsWith('.svg')) {
-    return 'svg';
+    if (fileName.endsWith(endMatch)) {
+      return fileMap[query];
+    }
   }
 
   return 'default';
@@ -41,10 +98,22 @@ const dirMap = {
  * @returns {string}
  */
 function mapDirectory(dirName) {
-  const exactMatch = dirMap[dirName];
+  for (const query in dirMap) {
+    const isDynamic = query.charAt(0) === '*';
 
-  if (exactMatch) {
-    return exactMatch;
+    if (!isDynamic && query === dirName) {
+      return dirMap[dirName];
+    }
+
+    if (!isDynamic) {
+      continue;
+    }
+
+    const endMatch = query.substring(1);
+
+    if (dirName.endsWith(endMatch)) {
+      return dirMap[dirName];
+    }
   }
 
   return 'directory';

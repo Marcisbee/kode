@@ -20,6 +20,13 @@ function IconDirectory({ entry }: { entry: string }) {
   );
 }
 
+const filesToIgnore = [
+  // '.',
+  '..',
+  '.DS_Store',
+  '.git',
+];
+
 function Files() {
   const [path, setPath] = useState<string>('/Users/marcisbee/Documents/GitHub/kode/apps/desktop');
   const [files, setFiles] = useState<{ entry: string, type: 'DIRECTORY' | 'FILE' }[]>([]);
@@ -45,11 +52,15 @@ function Files() {
       h('h2', null, path.split('/').pop()),
 
       h('ul', null, files
-        // .filter(({ entry }) => entry !== '.' && entry !== '..' && entry !== '.DS_Store')
-        .filter(({ entry }) => entry !== '..' && entry !== '.DS_Store')
-        .filter(({ entry }) => entry !== '.DS_Store')
-        .sort((a, b) => a.entry < b.entry ? 1 : -1)
-        .sort((a, b) => a.type === 'FILE' ? 1 : -1)
+        .filter(({ entry }) => filesToIgnore.indexOf(entry) === -1)
+        .sort((a, b) => {
+          if (a.type === b.type) {
+            return a.entry > b.entry ? 1 : -1;
+          }
+
+          return a.type === 'FILE' ? 1 : -1;
+        })
+
         .map(({ type, entry }) => (
           h('li', {
             class: `list-${type === 'DIRECTORY' ? 'directory' : 'file'}`,
