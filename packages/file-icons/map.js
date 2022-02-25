@@ -3,6 +3,7 @@ const prefix = require('./prefix');
 
 const fileMap = {
   'package.json': 'node',
+  'package-lock.json': 'node',
 };
 
 /**
@@ -18,6 +19,14 @@ function mapFile(fileName) {
 
   if (fileName.endsWith('.json')) {
     return 'json';
+  }
+
+  if (fileName.endsWith('.md')) {
+    return 'md';
+  }
+
+  if (fileName.endsWith('.svg')) {
+    return 'svg';
   }
 
   return 'default';

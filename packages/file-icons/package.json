@@ -5,11 +5,14 @@
   "main": "./map.js",
   "scripts": {
     "prebuild": "rm -rf dist && mkdir -p dist",
-    "build": "npx fantasticon"
+    "build": "fantasticon"
   },
   "files": [
     "dist",
     "map.js",
     "prefix.js"
-  ]
+  ],
+  "devDependencies": {
+    "fantasticon": "^1.2.3"
+  }
 }

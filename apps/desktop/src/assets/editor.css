@@ -26,8 +26,8 @@
 #left li {
   display: block;
   margin: 0;
-  height: 21px;
-  line-height: 21px;
+  height: 22px;
+  line-height: 22px;
   padding: 0 10px 0 20px;
   cursor: pointer;
 }
@@ -37,8 +37,13 @@
 }
 
 #left li .icon {
+  display: inline-block;
   vertical-align: top;
   margin-top: 4px;
+  width: 14px;
+  height: 14px;
+  line-height: 1;
+  margin-right: 7px;
 }
 
 #content {
