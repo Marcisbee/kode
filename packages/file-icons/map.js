@@ -7,12 +7,20 @@ const fileMap = {
   'yarn.lock': 'yarn',
   'pnpm-lock.yaml': 'pnpm',
 
+  '.gitattributes': 'git',
+  '.gitignore': 'git',
+  '.gitkeep': 'git',
+
   '.editorconfig': 'editorconfig',
   '.browserlist': 'browserlist',
+  '.browserlistrc': 'browserlist',
   '.stylelint': 'stylelint',
+  '.stylelintrc': 'stylelint',
+  '.stylelintignore': 'stylelint',
   '.eslintrc': 'eslint',
   '.yarnrc': 'yarn',
   '.npmrc': 'npm',
+  '.npmignore': 'npm',
   '.prettierrc': 'prettier',
 
   'vite.config.js': 'vite',
@@ -23,6 +31,19 @@ const fileMap = {
   'webpack.config.ts': 'webpack',
   'tailwind.config.js': 'tailwind',
   'tailwind.config.ts': 'tailwind',
+  'babel.config.js': 'babel',
+  'babel.config.ts': 'babel',
+  'jest.config.js': 'jest',
+  'jest.config.ts': 'jest',
+
+  '.env': 'env',
+  // @TODO: Support for endsWith
+  // '.env.*': 'env',
+
+  '*.module.ts': 'angular',
+  '*.component.ts': 'angular',
+
+  '*.webpack.json': 'webpack',
 
   '*.story.js': 'storybook',
   '*.stories.js': 'storybook',
@@ -47,20 +68,26 @@ const fileMap = {
   '*.res': 'rescript',
   '*.riot': 'riot',
   '*.svelte': 'svelte',
+  '*.vue': 'vue',
 
   '*.html': 'html',
   '*.css': 'css',
   '*.sass': 'sass',
   '*.scss': 'sass',
+  '*.less': 'less',
   '*.stylus': 'stylus',
 
   '*.graphql': 'graphql',
   '*.gql': 'graphql',
   '*.toml': 'toml',
   '*.json': 'json',
+  '*.yaml': 'yaml',
+  '*.yml': 'yaml',
   '*.md': 'md',
   '*.mdx': 'mdx',
   '*.svg': 'svg',
+
+  '*.rs': 'rust',
 };
 
 /**
