@@ -117,7 +117,7 @@ function mapFile(fileName) {
 }
 
 const dirMap = {
-
+  'directory-open': 'directory-open',
 };
 
 /**

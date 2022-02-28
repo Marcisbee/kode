@@ -56,12 +56,13 @@ export class Editor {
   public scroll: number = 0;
   public input: HTMLInputElement;
 
-  public canvas!: HTMLCanvasElement;
   private _offScreenCanvas = document.createElement('canvas');
   private _realCtx: CanvasRenderingContext2D;
-  public ctx = this._offScreenCanvas.getContext('2d', canvasSettings)!;
   private _label: HTMLLabelElement;
   private container?: HTMLElement;
+
+  public canvas!: HTMLCanvasElement;
+  public ctx = this._offScreenCanvas.getContext('2d', canvasSettings)!;
 
   public letterWidth: number;
   public readonly height!: number;
@@ -135,8 +136,8 @@ export class Editor {
 
     this.container.addEventListener('mousewheel', (e) => e.preventDefault(), true);
     this.canvas.addEventListener('mousewheel', this.onWheel, {
-      capture: false,
-      passive: true
+      capture: true,
+      passive: true,
     });
     this.canvas.addEventListener('mousedown', this.onMouseDown);
 

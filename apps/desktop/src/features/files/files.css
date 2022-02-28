@@ -72,7 +72,7 @@
   margin-right: 7px;
 }
 
-#left li.list-directory {
+#left li.list-directory > button {
   color: #af87ff;
   font-weight: 600;
 }
