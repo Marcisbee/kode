@@ -11,12 +11,15 @@
   overflow: hidden;
 }
 
+#left > ul {
+  height: 90vh;
+}
+
 #left ul {
   display: block;
   margin: 0;
   padding: 0;
   flex: 1;
-  height: 90vh;
   user-select: none;
   position: relative;
   overflow-x: hidden;
@@ -28,7 +31,7 @@
   position: relative;
   margin: 0;
   font-size: 14px;
-  height: 23px;
+  /* height: 23px; */
   line-height: 23px;
   padding: 0 10px 0 20px;
   cursor: pointer;
@@ -36,6 +39,10 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+#left li > ul {
+  /* margin-left: 20px; */
 }
 
 #left li::before {
