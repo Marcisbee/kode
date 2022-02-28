@@ -33,26 +33,35 @@ const filesToIgnore = [
   '.git',
 ];
 
+function filterFiles({ entry }: FileDataset) {
+  return filesToIgnore.indexOf(entry) === -1;
+}
+
+function sortFiles(a: FileDataset, b: FileDataset) {
+  if (a.type === b.type) {
+    return a.entry > b.entry ? 1 : -1;
+  }
+
+  return a.type === 'FILE' ? 1 : -1;
+}
+
 export interface TreeProps {
   path: string;
   isOpen?: boolean;
+  depth?: number;
 }
 
 export function Tree({
   path,
   isOpen = false,
+  depth = 0,
 }: TreeProps) {
   const [files, setFiles] = useState<FileDataset[]>([]);
 
-  const filesFiltered = useMemo(() => (files
-    .filter(({ entry }) => filesToIgnore.indexOf(entry) === -1)
-    .sort((a, b) => {
-      if (a.type === b.type) {
-        return a.entry > b.entry ? 1 : -1;
-      }
-
-      return a.type === 'FILE' ? 1 : -1;
-    })
+  const filesFiltered = useMemo(() => (
+    files
+      .filter(filterFiles)
+      .sort(sortFiles)
   ), [files.toString()]);
 
   useEffect(() => {
@@ -79,11 +88,13 @@ export function Tree({
             <TreeDirectory
               path={path}
               entry={entry}
+              depth={depth}
             />
           ) : (
             <TreeFile
               path={path}
               entry={entry}
+              depth={depth}
             />
           )}
 
@@ -96,9 +107,14 @@ export function Tree({
 export interface TreeDirectoryProps {
   path: string;
   entry: string;
+  depth: number;
 }
 
-function TreeDirectory({ path, entry }: TreeDirectoryProps) {
+function TreeDirectory({
+  path,
+  entry,
+  depth,
+}: TreeDirectoryProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   async function onClick() {
@@ -108,18 +124,28 @@ function TreeDirectory({ path, entry }: TreeDirectoryProps) {
   return (
     <li
       class="list-directory"
-      onClick={onClick}
+      data-is-open={isOpen}
     >
-      <IconDirectory entry={entry} />
+      <button
+        onClick={onClick}
+        style={{ paddingLeft: (depth * 10) + 20 }}
+      >
+        <svg class="dir-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+        </svg>
 
-      <span>
-        {entry}
-      </span>
+        <IconDirectory entry={entry} />
+
+        <span>
+          {entry}
+        </span>
+      </button>
 
       {isOpen && (
         <Tree
           path={`${path}/${entry}`}
           isOpen
+          depth={depth + 1}
         />
       )}
     </li>
@@ -129,9 +155,14 @@ function TreeDirectory({ path, entry }: TreeDirectoryProps) {
 export interface TreeFileProps {
   path: string;
   entry: string;
+  depth: number;
 }
 
-function TreeFile({ path, entry }: TreeFileProps) {
+function TreeFile({
+  path,
+  entry,
+  depth,
+}: TreeFileProps) {
   const { getFile } = store.workspace!;
 
   async function onClick() {
@@ -141,13 +172,17 @@ function TreeFile({ path, entry }: TreeFileProps) {
   return (
     <li
       class="list-file"
-      onClick={onClick}
     >
-      <IconFile entry={entry} />
+      <button
+        onClick={onClick}
+        style={{ paddingLeft: (depth * 10) + 20 }}
+      >
+        <IconFile entry={entry} />
 
-      <span>
-        {entry}
-      </span>
+        <span>
+          {entry}
+        </span>
+      </button>
     </li>
   );
 }
