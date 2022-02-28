@@ -96,7 +96,7 @@ const fileMap = {
  */
 function mapFile(fileName) {
   for (const query in fileMap) {
-    const isDynamic = query.charAt(0) === '*';
+    const isDynamic = query.indexOf('*') === 0;
 
     if (!isDynamic && query === fileName) {
       return fileMap[query];
@@ -126,7 +126,7 @@ const dirMap = {
  */
 function mapDirectory(dirName) {
   for (const query in dirMap) {
-    const isDynamic = query.charAt(0) === '*';
+    const isDynamic = query.indexOf('*') === 0;
 
     if (!isDynamic && query === dirName) {
       return dirMap[dirName];

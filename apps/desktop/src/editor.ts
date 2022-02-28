@@ -1,12 +1,11 @@
 import {
   Editor,
   Model,
-  recommendedPlugins,
-} from './kode';
-import { statsPlugin } from './plugins/stats';
-import './style.css';
-
-const editor = document.querySelector<HTMLDivElement>('#editor')!;
+  // recommendedPlugins,
+} from 'editor';
+import 'editor/src/style.css';
+import { h } from 'preact';
+import { useLayoutEffect, useRef } from 'preact/hooks';
 
 // const stressTest = new Array(2000).fill(`export class Editor {
 //   public scroll: number = 0;
@@ -284,17 +283,20 @@ export class Editor {
 }
 `.split('\n'));
 
-const EditorInstance = new Editor(
-  model,
-  undefined,
-  [
-    ...recommendedPlugins,
-    ...(
-      process.env.NODE_ENV === 'production'
-        ? [statsPlugin()]
-        : []
-    ),
-  ],
-);
+export const MainEditorInstance = new Editor(model);
 
-EditorInstance.mount(editor);
+export function EditorComponent() {
+  const editorWrapper = useRef<HTMLElement>(null);
+
+  useLayoutEffect(() => {
+    if (!editorWrapper.current) {
+      return;
+    }
+
+    MainEditorInstance.mount(editorWrapper.current);
+  }, []);
+
+  return (
+    h('div', { id: 'editor', ref: editorWrapper as any })
+  );
+}

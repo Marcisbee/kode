@@ -99,7 +99,7 @@ export class LinesShrink implements LineRenderer {
     public height: number,
   ) { }
 
-  public draw({ ctx, width, theme }: Editor) {
+  public draw({ ctx, width }: Editor) {
     ctx.fillStyle = 'rgba(0,0,0,0.15)';
     ctx.fillRect(
       0,
@@ -281,11 +281,17 @@ export class Model {
       // },
     ],
   ) {
-    this.updateTokens();
+    this._updateTokens();
+  }
+
+  public setText(text: string[]) {
+    this.text = text;
+    this._resetSelection();
+    this._updateTokens();
   }
 
   public refreshContents() {
-    this.updateTokens();
+    this._updateTokens();
   }
 
   public render(editor: Editor) {
@@ -316,7 +322,6 @@ export class Model {
     for (let lineIndex = 0; lineIndex < state.lines.length; lineIndex++) {
       const line = state.lines[lineIndex];
       const { row } = line;
-      let col = 0;
 
       const shouldRender = state.position + line.height > scroll;
 
@@ -413,10 +418,10 @@ export class Model {
           }
         }
 
-        this.renderLineNumber(editor, col, row);
+        this.renderLineNumber(editor, 0, row);
         resetFontOptions();
 
-        line.draw(editor, col);
+        line.draw(editor, 0);
 
         ctx.fillStyle = theme.diagnosticError;
 
@@ -527,10 +532,26 @@ export class Model {
   public _hook(editor: Editor) {
     squashPlugin(editor);
     // typecheckPlugin(editor);
-    this.updateTokens();
+
+    this.events.on('update', () => {
+      editor.renderModel();
+    });
+
+    this._updateTokens();
   }
 
-  private updateTokens() {
+  private _resetSelection() {
+    this.selections = [
+      {
+        start: {
+          x: 0,
+          y: 0,
+        },
+      },
+    ];
+  }
+
+  private _updateTokens() {
     const code = this.text.join('\n');
 
     console.time('Lexer');

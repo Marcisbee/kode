@@ -93,8 +93,10 @@ export function keyMapPlugin(): EditorPlugin {
         if (event.key === 'Enter') {
           const chunks = [];
 
-          chunks.push(model.text[y].substring(0, x));
-          chunks.push(model.text[y].substring(x));
+          chunks.push(
+            model.text[y].substring(0, x),
+            model.text[y].substring(x),
+          );
 
           model.text.splice(y, 1, ...chunks);
           start.y += 1;
@@ -114,8 +116,10 @@ export function keyMapPlugin(): EditorPlugin {
             model.text.splice(y - 1, 2, chunks.join(''));
             start.y = Math.max(y - 1, 0);
           } else {
-            chunks.push(model.text[y].substring(0, x - 1));
-            chunks.push(model.text[y].substring(x));
+            chunks.push(
+              model.text[y].substring(0, x - 1),
+              model.text[y].substring(x),
+            );
 
             start.x = Math.max(currentCol - 1, 0);
             model.text.splice(y, 1, chunks.join(''));
@@ -125,9 +129,11 @@ export function keyMapPlugin(): EditorPlugin {
         if (event.key?.length === 1) {
           const chunks = [];
 
-          chunks.push(model.text[y].substring(0, x));
-          chunks.push(event.key);
-          chunks.push(model.text[y].substring(x));
+          chunks.push(
+            model.text[y].substring(0, x),
+            event.key,
+            model.text[y].substring(x),
+          );
 
           model.text.splice(y, 1, chunks.join(''));
           start.x = Math.min(x + 1, model.text[y].length);

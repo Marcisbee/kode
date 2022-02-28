@@ -1,7 +1,7 @@
 import type { Token } from './lexer';
 import { Line, LinesShrink, Model, ModelSelection } from './model';
 import { autoClosePlugin } from './plugins/auto-close';
-import { footerPlugin } from './plugins/footer';
+// import { footerPlugin } from './plugins/footer';
 import { keyMapPlugin } from './plugins/key-map';
 import { preserveIndent } from './plugins/preserve-indent';
 import { scrollbarPlugin } from './plugins/scrollbar';
@@ -31,7 +31,7 @@ export interface EditorRenderState {
 
 export const recommendedPlugins: EditorPlugin[] = [
   selectedLinePlugin(),
-  footerPlugin(),
+  // footerPlugin(),
   selectedIdentifierPlugin(),
   autoClosePlugin(),
   keyMapPlugin(),
@@ -60,6 +60,8 @@ export class Editor {
   private _offScreenCanvas = document.createElement('canvas');
   private _realCtx: CanvasRenderingContext2D;
   public ctx = this._offScreenCanvas.getContext('2d', canvasSettings)!;
+  private _label: HTMLLabelElement;
+  private container?: HTMLElement;
 
   public letterWidth: number;
   public readonly height!: number;
@@ -69,7 +71,6 @@ export class Editor {
   public events: Emitter<EditorEvents> = createEvents<EditorEvents>();
 
   constructor(
-    public container: HTMLElement,
     public model = new Model(['']),
     public theme: Record<string, string> = AtomOneDark,
     public plugins: EditorPlugin[] = recommendedPlugins.slice(),
@@ -81,15 +82,9 @@ export class Editor {
   ) {
     this.resetState();
 
-    Object.assign(this.container.style, {
-      transform: 'translateZ(0)',
-      overflow: 'hidden',
-      position: 'relative',
-    });
+    this._label = document.createElement('label');
 
-    const label = document.createElement('label');
-
-    Object.assign(label.style, {
+    Object.assign(this._label.style, {
       display: 'block',
       fontSize: 0,
       transform: 'translateZ(0)',
@@ -97,23 +92,34 @@ export class Editor {
     });
 
     this.canvas = document.createElement('canvas');
-    label.appendChild(this.canvas);
-    container.appendChild(label);
+    this._label.appendChild(this.canvas);
 
-    this.ctx.font = `${font.size}px ${font.family}`;
+    this.ctx.font = `${this.font.size}px ${this.font.family}`;
     const measurements = this.ctx.measureText('M');
 
     this.letterWidth = measurements.width;
 
-    this.container.style.textRendering = 'optimizeSpeed';
-    this._offScreenCanvas.style.textRendering = 'optimizeSpeed';
-    this.canvas.style.textRendering = 'optimizeSpeed';
-
-    // this.canvas.style.letterSpacing = '0px';
-    // this._offScreenCanvas.style.letterSpacing = '0px';
+    // this.container.style.textRendering = 'optimizeSpeed';
+    // this._offScreenCanvas.style.textRendering = 'optimizeSpeed';
+    // this.canvas.style.textRendering = 'optimizeSpeed';
 
     this._realCtx = this.canvas.getContext('2d', canvasSettings)!;
     this.input = createInput(this);
+  }
+
+  public mount(container: HTMLElement) {
+    this.container = container;
+
+    Object.assign(this.container.style, {
+      transform: 'translateZ(0)',
+      overflow: 'hidden',
+      position: 'relative',
+    });
+
+    container.appendChild(this._label);
+
+    // this.canvas.style.letterSpacing = '0px';
+    // this._offScreenCanvas.style.letterSpacing = '0px';
 
     this.model._hook(this);
 
@@ -138,8 +144,8 @@ export class Editor {
   }
 
   private onResize = () => {
-    const w = this.container.clientWidth;
-    const h = this.container.clientHeight;
+    const w = this.container!.clientWidth;
+    const h = this.container!.clientHeight;
     const wRatio = w * devicePixelRatio;
     const hRatio = h * devicePixelRatio;
 
@@ -166,8 +172,6 @@ export class Editor {
     e.preventDefault();
 
     this.events.emit('input', e);
-
-    this.renderModel();
   };
 
   private onWheel = (e: Event) => {
