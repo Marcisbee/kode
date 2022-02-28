@@ -1,5 +1,7 @@
 import { h, render } from 'preact';
 import { App } from './app';
+import { store } from './store';
+import { Workspace } from './store/workspace';
 
 import './assets/editor.css';
 
@@ -12,6 +14,8 @@ import './assets/editor.css';
 //   }
 //   // Neutralino.os.showMessageBox('Welcome', 'Hello Neutralinojs');
 // });
+
+store.workspace = new Workspace('/var/www/dxjs');
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
 

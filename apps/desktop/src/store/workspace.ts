@@ -1,24 +1,35 @@
+import { Editor } from 'editor';
 import { Exome, registerLoadable } from 'exome';
-
-import { memoize } from '../util/memoize';
 
 import { File } from './file';
 
-const getDirectoryName = memoize<(path: string) => string>(
-  (p) => (p.split('/').pop() || 'unnamed')
-);
-
 export class Workspace extends Exome {
+  public editor: Editor;
   public files: File[] = [];
+  public currentFile?: File;
 
   public get name() {
-    return getDirectoryName(this.path);
+    return (this.path || '').split('/').pop() || 'unnamed';
   }
 
   constructor(
     public path: string,
   ) {
     super();
+
+    this.editor = new Editor();
+  }
+
+  public setPath(path: string) {
+    this.path = path;
+  }
+
+  public async getFile(path: string) {
+    const text = await Neutralino.filesystem.readFile(path);
+    const textData = text.split('\n');
+
+    this.currentFile = new File(path, textData);
+    this.editor.model.setText(textData);
   }
 }
 

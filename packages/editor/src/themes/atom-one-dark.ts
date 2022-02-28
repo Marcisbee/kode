@@ -25,6 +25,7 @@ function find(match: string, fallback: string = 'lime') {
 export const AtomOneDark: Record<string, string> = {
   bg: theme.colors['editor.background'],
   plain: theme.colors['editor.foreground'],
+  text: theme.colors['editor.foreground'],
   caret: theme.colors['editorCursor.foreground'],
   hidden: 'rgba(165,165,165,0.2)',
   'line-number': theme.colors['editorLineNumber.foreground'],

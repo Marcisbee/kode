@@ -1,10 +1,10 @@
+import { useStore } from 'exome/preact';
 import { useState, useEffect, useMemo } from 'preact/hooks';
 import 'icons/dist/icons.css';
 import { mapFile, mapDirectory } from 'icons/map';
 
-import { MainEditorInstance } from '../editor/editor';
-
 import './files.css';
+import { store } from '../../store';
 
 function IconFile({ entry }: { entry: string }) {
   return (
@@ -35,7 +35,7 @@ interface FileDataset {
 }
 
 export function Files() {
-  const [path, setPath] = useState<string>('/var/www/dxjs');
+  const { name, path, setPath, getFile } = useStore(store.workspace!);
   const [files, setFiles] = useState<FileDataset[]>([]);
   const filesFiltered = useMemo(() => (files
     .filter(({ entry }) => filesToIgnore.indexOf(entry) === -1)
@@ -47,7 +47,6 @@ export function Files() {
       return a.type === 'FILE' ? 1 : -1;
     })
   ), [files.toString()]);
-  const currentDirectoryName = path.split('/').pop();
 
   useEffect(() => {
     if (!path) {
@@ -70,26 +69,25 @@ export function Files() {
 
     if (type === 'DIRECTORY') {
       if (entry === '.') {
-        setPath((p) => p.split('/').slice(0, -1).join('/'));
+        setPath(path.split('/').slice(0, -1).join('/'));
         return;
       }
 
-      setPath((p) => `${p}/${entry}`);
+      setPath(`${path}/${entry}`);
       return;
     }
 
-    const text = await Neutralino.filesystem.readFile(`${path}/${entry}`);
-
-    MainEditorInstance.model.setText(text.split('\n'));
+    getFile(`${path}/${entry}`);
   }
 
   return (
     <div>
-      <h2>{currentDirectoryName}</h2>
+      <h2>{name}</h2>
 
       <ul>
         {filesFiltered.map(({ type, entry }) => (
           <li
+            key={`file-list|${path}/${entry}`}
             data-type={type}
             data-entry={entry}
             class={`list-${type === 'DIRECTORY' ? 'directory' : 'file'}`}

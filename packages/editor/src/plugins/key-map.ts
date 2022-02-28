@@ -138,11 +138,11 @@ export function keyMapPlugin(): EditorPlugin {
           model.text.splice(y, 1, chunks.join(''));
           start.x = Math.min(x + 1, model.text[y].length);
         }
-
-        model.refreshContents();
-
-        console.log(event);
       }
+
+      model.refreshContents();
+
+      console.log(event);
     })
   };
 }
