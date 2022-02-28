@@ -21,6 +21,9 @@ esbuild
     loader: {
       '.woff2': 'file',
     },
+    inject: [
+      './scripts/preact-shim.js',
+    ],
   })
   .then(async (result) => {
     const text = await esbuild.analyzeMetafile(result.metafile);

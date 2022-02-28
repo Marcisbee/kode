@@ -27,6 +27,9 @@ esbuild
     loader: {
       '.woff2': 'file',
     },
+    inject: [
+      './scripts/preact-shim.js',
+    ],
   })
   .catch((e) => {
     console.log(e);

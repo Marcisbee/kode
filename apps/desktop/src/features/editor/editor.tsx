@@ -4,7 +4,6 @@ import {
   // recommendedPlugins,
 } from 'editor';
 import 'editor/src/style.css';
-import { h } from 'preact';
 import { useLayoutEffect, useRef } from 'preact/hooks';
 
 // const stressTest = new Array(2000).fill(`export class Editor {
@@ -297,6 +296,11 @@ export function EditorComponent() {
   }, []);
 
   return (
-    h('div', { id: 'editor', ref: editorWrapper as any })
+    <div id="editorWrapper">
+      <div
+        id="editor"
+        ref={editorWrapper as any}
+      />
+    </div>
   );
 }

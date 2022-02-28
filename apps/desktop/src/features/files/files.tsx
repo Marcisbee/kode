@@ -1,20 +1,24 @@
-import { h } from 'preact';
 import { useState, useEffect, useMemo } from 'preact/hooks';
 import 'icons/dist/icons.css';
 import { mapFile, mapDirectory } from 'icons/map';
 
-import './assets/file.css';
-import { MainEditorInstance } from './editor';
+import { MainEditorInstance } from '../editor/editor';
+
+import './files.css';
 
 function IconFile({ entry }: { entry: string }) {
   return (
-    h('i', { class: `icon file-icon ${mapFile(entry)}` })
+    <i
+      class={`icon file-icon ${mapFile(entry)}`}
+    />
   );
 }
 
 function IconDirectory({ entry }: { entry: string }) {
   return (
-    h('i', { class: `icon dir-icon ${mapDirectory(entry)}` })
+    <i
+      class={`icon dir-icon ${mapDirectory(entry)}`}
+    />
   );
 }
 
@@ -31,7 +35,7 @@ interface FileDataset {
 }
 
 export function Files() {
-  const [path, setPath] = useState<string>('/Users/marcisbee/Documents/GitHub/kode/apps/desktop');
+  const [path, setPath] = useState<string>('/var/www/dxjs');
   const [files, setFiles] = useState<FileDataset[]>([]);
   const filesFiltered = useMemo(() => (files
     .filter(({ entry }) => filesToIgnore.indexOf(entry) === -1)
@@ -80,27 +84,29 @@ export function Files() {
   }
 
   return (
-    h('div', null, [
-      h('h2', null, currentDirectoryName),
+    <div>
+      <h2>{currentDirectoryName}</h2>
 
-      h('ul', null, filesFiltered
-        .map(({ type, entry }) => (
-          h('li', {
-            'data-type': type,
-            'data-entry': entry,
-            class: `list-${type === 'DIRECTORY' ? 'directory' : 'file'}`,
-            onClick,
-          }, [
-            h(
-              type === 'DIRECTORY'
-                ? IconDirectory
-                : IconFile,
-              { entry },
-            ),
-            entry
-          ])
-        )
-      )),
-    ])
+      <ul>
+        {filesFiltered.map(({ type, entry }) => (
+          <li
+            data-type={type}
+            data-entry={entry}
+            class={`list-${type === 'DIRECTORY' ? 'directory' : 'file'}`}
+            onClick={onClick}
+          >
+            {type === 'DIRECTORY' ? (
+              <IconDirectory entry={entry} />
+            ) : (
+              <IconFile entry={entry} />
+            )}
+
+            <span>
+              {entry}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
