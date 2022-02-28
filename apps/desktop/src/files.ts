@@ -25,13 +25,13 @@ const filesToIgnore = [
   '.git',
 ];
 
-  const [path, setPath] = useState<string>('/Users/marcisbee/Documents/GitHub/kode/apps/desktop');
 interface FileDataset {
   entry: string;
   type: 'DIRECTORY' | 'FILE';
 }
 
 export function Files() {
+  const [path, setPath] = useState<string>('/Users/marcisbee/Documents/GitHub/kode/apps/desktop');
   const [files, setFiles] = useState<FileDataset[]>([]);
   const filesFiltered = useMemo(() => (files
     .filter(({ entry }) => filesToIgnore.indexOf(entry) === -1)
