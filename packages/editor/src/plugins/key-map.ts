@@ -10,6 +10,8 @@ export function keyMapPlugin(): EditorPlugin {
       }
 
       if (event.key === 'Alt') {
+        event.preventDefault();
+        model.refreshContents();
         return;
       }
 
@@ -48,12 +50,18 @@ export function keyMapPlugin(): EditorPlugin {
           // continue;
         }
 
-        const { start } = selection;
+        const { start, end } = selection;
         const { x, y } = start;
 
         selection.end = undefined;
 
         if (event.key === 'ArrowRight') {
+          if (end) {
+            start.x = end.x;
+            start.y = end.y;
+            continue;
+          }
+
           const lineLength = model.text[y].length;
           const currentCol = Math.min(x, lineLength);
 
@@ -70,6 +78,10 @@ export function keyMapPlugin(): EditorPlugin {
         }
 
         if (event.key === 'ArrowLeft') {
+          if (end) {
+            continue;
+          }
+
           const lineLength = model.text[y].length;
           const currentCol = Math.min(x, lineLength);
 
@@ -83,12 +95,23 @@ export function keyMapPlugin(): EditorPlugin {
         }
 
         if (event.key === 'ArrowDown') {
+          if (end) {
+            start.x = end.x;
+            start.y = Math.min(end.y + 1, model.text.length - 1);
+            continue;
+          }
+
           start.y = Math.min(y + 1, model.text.length - 1);
           // model.x = Math.min(model.x, model.text[model.y].length);
           continue;
         }
 
         if (event.key === 'ArrowUp') {
+          if (end) {
+            start.y = Math.max(start.y - 1, 0);
+            continue;
+          }
+
           start.y = Math.max(y - 1, 0);
           // model.x = Math.min(model.x, model.text[model.y].length);
           continue;
