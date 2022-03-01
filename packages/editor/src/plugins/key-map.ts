@@ -120,12 +120,15 @@ export function keyMapPlugin(): EditorPlugin {
         if (event.key === 'Enter') {
           const chunks = [];
 
+          const touchedLines = model.text
+            .slice(y, (end?.y || y) + 1);
+
           chunks.push(
-            model.text[y].substring(0, x),
-            model.text[y].substring(x),
+            touchedLines[0].substring(0, x),
+            touchedLines[touchedLines.length - 1].substring(end?.x || x),
           );
 
-          model.text.splice(y, 1, ...chunks);
+          model.text.splice(y, touchedLines.length, ...chunks);
           start.y += 1;
           start.x = 0;
         }
