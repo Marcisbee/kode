@@ -81,7 +81,7 @@ export class Editor {
       lineHeight: 12 * 1.5,
     }
   ) {
-    this.resetState();
+    this._resetState();
 
     this._label = document.createElement('label');
 
@@ -129,22 +129,23 @@ export class Editor {
       .filter(Boolean)
       .map((fn) => fn?.(this));
 
-    this.input.addEventListener('keydown', this.onInput, false);
+    this.input.addEventListener('paste', this._onPaste, false);
+    this.input.addEventListener('keydown', this._onInput, false);
 
-    window.addEventListener('resize', this.onResize, false);
-    window.addEventListener('orientationchange', this.onResize, false);
+    window.addEventListener('resize', this._onResize, false);
+    window.addEventListener('orientationchange', this._onResize, false);
 
     this.container.addEventListener('mousewheel', (e) => e.preventDefault(), true);
-    this.canvas.addEventListener('mousewheel', this.onWheel, {
+    this.canvas.addEventListener('mousewheel', this._onWheel, {
       capture: true,
       passive: true,
     });
-    this.canvas.addEventListener('mousedown', this.onMouseDown);
+    this.canvas.addEventListener('mousedown', this._onMouseDown);
 
-    this.onResize();
+    this._onResize();
   }
 
-  private onResize = () => {
+  private _onResize = () => {
     const w = this.container!.clientWidth;
     const h = this.container!.clientHeight;
     const wRatio = w * devicePixelRatio;
@@ -169,13 +170,45 @@ export class Editor {
     this.renderModel();
   };
 
-  private onInput = (e: KeyboardEvent) => {
+  private _onInput = (e: KeyboardEvent) => {
     e.preventDefault();
 
     this.events.emit('input', e);
   };
 
-  private onWheel = (e: Event) => {
+  private _onPaste = (e: ClipboardEvent) => {
+    e.preventDefault();
+
+    const paste = ((e as any).detail?.getData || e.clipboardData?.getData)('text');
+
+    if (!paste) {
+      return;
+    }
+
+    const { selections, text } = this.model;
+
+    for (const selection of selections) {
+      const { start } = selection;
+      const { x, y } = start;
+
+      const endChunks = paste!.split('\n');
+      const lastLineChars = endChunks[endChunks?.length - 1].length;
+
+      const chunks = [
+        text[y].substring(0, x),
+        paste,
+        text[y].substring(x),
+      ];
+
+      text.splice(y, 1, ...chunks.join('').split('\n'));
+      start.x = endChunks.length > 1 ? lastLineChars : start.x + lastLineChars;
+      start.y = endChunks.length === 1 ? start.y : start.y + endChunks.length - 1;
+    }
+
+    this.model.refreshContents();
+  };
+
+  private _onWheel = (e: Event) => {
     const previousScroll = this.scroll;
     const scrollLimit = this.state.height;
 
@@ -190,7 +223,7 @@ export class Editor {
     return false;
   };
 
-  private onMouseDown = (e: MouseEvent) => {
+  private _onMouseDown = (e: MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -268,7 +301,7 @@ export class Editor {
     window.addEventListener('mouseup', onMouseUp, false);
   };
 
-  private resetState() {
+  private _resetState() {
     this.state = {
       autoFoldLines: 0,
       lines: [],

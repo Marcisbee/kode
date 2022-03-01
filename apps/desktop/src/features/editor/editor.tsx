@@ -22,6 +22,30 @@ export function EditorComponent() {
       return;
     }
 
+    /**
+     * Create custom events for Copy/Cut/Paste because of:
+     * https://github.com/neutralinojs/webview/issues/9
+     */
+    editor.input.addEventListener('keydown', (e) => {
+      if (e.metaKey && e.key === 'v') {
+        e.preventDefault();
+
+        Neutralino.clipboard
+          .readText('text', '')
+          .then((text) => {
+            const customEvent = new CustomEvent('paste', {
+              bubbles: true,
+              detail: {
+                getData: () => text,
+              },
+            });
+
+            editor.input.dispatchEvent(customEvent);
+          });
+        return;
+      }
+    });
+
     editor.mount(editorWrapper.current);
   }, []);
 
