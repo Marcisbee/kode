@@ -15,6 +15,8 @@ export function keyMapPlugin(): EditorPlugin {
 
       if (event.metaKey) {
         if (event.key === 'a') {
+          event.preventDefault();
+
           const lastLineNumber = model.text.length - 1;
           const lastLineLength = model.text[lastLineNumber].length;
 
@@ -37,6 +39,8 @@ export function keyMapPlugin(): EditorPlugin {
       if (event.key === 'Escape') {
         return;
       }
+
+      event.preventDefault();
 
       for (const selection of model.selections) {
         if (event.shiftKey) {

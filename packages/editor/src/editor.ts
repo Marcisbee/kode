@@ -129,8 +129,8 @@ export class Editor {
       .filter(Boolean)
       .map((fn) => fn?.(this));
 
-    this.input.addEventListener('paste', this._onPaste, false);
     this.input.addEventListener('keydown', this._onInput, false);
+    this.input.addEventListener('paste', this._onPaste);
 
     window.addEventListener('resize', this._onResize, false);
     window.addEventListener('orientationchange', this._onResize, false);
@@ -171,15 +171,13 @@ export class Editor {
   };
 
   private _onInput = (e: KeyboardEvent) => {
-    e.preventDefault();
-
     this.events.emit('input', e);
   };
 
   private _onPaste = (e: ClipboardEvent) => {
     e.preventDefault();
 
-    const paste = ((e as any).detail?.getData || e.clipboardData?.getData)('text');
+    const paste = ((e as any).detail || e.clipboardData)?.getData('text');
 
     if (!paste) {
       return;
