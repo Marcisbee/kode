@@ -60,5 +60,5 @@ export const AtomOneDark: Record<string, string> = {
   guide: 'rgba(165,165,165,0.15)',
   selection: theme.colors['editor.selectionBackground'],
   'selected-line': theme.colors['editor.inactiveSelectionBackground'] || 'rgba(165,165,165,0.05)',
-  'match-identifier': 'rgba(165,165,165,0.2)',
+  'match-identifier': 'rgba(165,165,165,0.1)',
 };

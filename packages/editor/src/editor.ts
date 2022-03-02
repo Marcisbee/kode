@@ -12,6 +12,7 @@ import { tabPlugin } from './plugins/tab';
 import type { EditorPlugin } from './plugins/types';
 import { AtomOneDark } from './themes/atom-one-dark';
 import { createEvents, createInput, Emitter, getRowByTop } from './utils';
+import { selectRegion } from './utils/select-region';
 
 interface EditorFontConfig {
   size: number;
@@ -141,6 +142,7 @@ export class Editor {
       passive: true,
     });
     this.canvas.addEventListener('mousedown', this._onMouseDown);
+    this.canvas.addEventListener('dblclick', this._onDblClick);
 
     this._onResize();
   }
@@ -297,6 +299,27 @@ export class Editor {
     };
 
     window.addEventListener('mouseup', onMouseUp, false);
+  };
+
+  private _onDblClick = (e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const { text, selections } = this.model;
+    const [{ start: { x, y } }] = selections;
+
+    const [sX, eX] = selectRegion(text[y], x);
+
+    selections[0].start = {
+      x: sX,
+      y,
+    };
+    selections[0].end = {
+      x: eX,
+      y,
+    };
+
+    this.renderModel();
   };
 
   private _resetState() {
