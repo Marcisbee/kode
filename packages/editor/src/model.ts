@@ -1,6 +1,6 @@
 import type { Editor } from './editor';
 import { type Token, Lexer, typescript } from './lexer';
-import { createEvents, Emitter, getLinePosition } from './utils';
+import { createEvents, Emitter } from './utils';
 // import { typecheck } from './lsp/typescript';
 
 export interface ModelSelection {
@@ -295,17 +295,9 @@ export class Model {
   }
 
   public render(editor: Editor) {
-    const { state, ctx, font, input, scroll, letterWidth, theme } = editor;
+    const { state, ctx, font, scroll, theme } = editor;
 
-    const startX = this.selections[0].start.x;
-    const startY = this.selections[0].start.y;
     const fontFamily = `${font.size}px ${font.family}`;
-    const inputX =
-      this.gutterWidth +
-      Math.min(startX, this.text[startY].length) * letterWidth;
-    const inputY = getLinePosition(state, startY);
-
-    input.style.transform = `translate(${inputX}px, ${(inputY?.y || 0) + 2 - scroll}px)`;
 
     ctx.font = fontFamily;
     ctx.textBaseline = 'top';
@@ -388,68 +380,74 @@ export class Model {
 
         const diagnosticErrors = this.diagnostics.filter((e) => e.category === 1);
 
-        ctx.fillStyle = 'rgba(255,50,50,0.2)';
+        if (diagnosticErrors.length) {
+          ctx.fillStyle = 'rgba(255,50,50,0.2)';
 
-        for (let diagnosticIndex = 0; diagnosticIndex < diagnosticErrors.length; diagnosticIndex++) {
-          const { start, end } = diagnosticErrors[diagnosticIndex];
+          for (let diagnosticIndex = 0; diagnosticIndex < diagnosticErrors.length; diagnosticIndex++) {
+            const { start, end } = diagnosticErrors[diagnosticIndex];
 
-          if (!end) {
-            continue;
-          }
+            if (!end) {
+              continue;
+            }
 
-          if (start.y === row && end.y === row) {
-            this.renderDiagnosticBackground(editor);
-            continue;
-          }
+            if (start.y === row && end.y === row) {
+              this.renderDiagnosticBackground(editor);
+              continue;
+            }
 
-          if (start.y === row && end.y > row) {
-            this.renderDiagnosticBackground(editor);
-            continue;
-          }
+            if (start.y === row && end.y > row) {
+              this.renderDiagnosticBackground(editor);
+              continue;
+            }
 
-          if (start.y <= row && end.y > row) {
-            this.renderDiagnosticBackground(editor);
-            continue;
-          }
+            if (start.y <= row && end.y > row) {
+              this.renderDiagnosticBackground(editor);
+              continue;
+            }
 
-          if (start.y < row && end.y === row) {
-            this.renderDiagnosticBackground(editor);
-            continue;
+            if (start.y < row && end.y === row) {
+              this.renderDiagnosticBackground(editor);
+              continue;
+            }
           }
         }
 
-        this.renderLineNumber(editor, 0, row);
+        this.renderLineNumber(editor, row);
         resetFontOptions();
 
         line.draw(editor, 0);
 
-        ctx.fillStyle = theme.diagnosticError;
+        this.renderCaret(editor, row);
 
-        for (let diagnosticIndex = 0; diagnosticIndex < diagnosticErrors.length; diagnosticIndex++) {
-          const { message, start, end } = diagnosticErrors[diagnosticIndex];
+        if (diagnosticErrors.length) {
+          ctx.fillStyle = theme.diagnosticError;
 
-          if (!end) {
-            continue;
-          }
+          for (let diagnosticIndex = 0; diagnosticIndex < diagnosticErrors.length; diagnosticIndex++) {
+            const { message, start, end } = diagnosticErrors[diagnosticIndex];
 
-          if (start.y === row && end.y === row) {
-            this.renderDiagnostic(editor, message, row, start.x, (end?.x || start.x) - start.x);
-            continue;
-          }
+            if (!end) {
+              continue;
+            }
 
-          if (start.y === row && end.y > row) {
-            this.renderDiagnostic(editor, message, row, start.x, this.text[row].length - start.x);
-            continue;
-          }
+            if (start.y === row && end.y === row) {
+              this.renderDiagnostic(editor, message, row, start.x, (end?.x || start.x) - start.x);
+              continue;
+            }
 
-          if (start.y <= row && end.y > row) {
-            this.renderDiagnostic(editor, message, row, 0, Math.max(1, this.text[row].length));
-            continue;
-          }
+            if (start.y === row && end.y > row) {
+              this.renderDiagnostic(editor, message, row, start.x, this.text[row].length - start.x);
+              continue;
+            }
 
-          if (start.y < row && end.y === row) {
-            this.renderDiagnostic(editor, message, row, 0, Math.min(end?.x || 0, this.text[row].length));
-            continue;
+            if (start.y <= row && end.y > row) {
+              this.renderDiagnostic(editor, message, row, 0, Math.max(1, this.text[row].length));
+              continue;
+            }
+
+            if (start.y < row && end.y === row) {
+              this.renderDiagnostic(editor, message, row, 0, Math.min(end?.x || 0, this.text[row].length));
+              continue;
+            }
           }
         }
       }
@@ -460,8 +458,7 @@ export class Model {
   }
 
   public renderLineNumber(
-    { ctx, font, letterWidth, theme }: Editor,
-    col: number,
+    { ctx, font, theme }: Editor,
     row: number
   ) {
     const lineNumber = (row + 1).toString();
@@ -473,7 +470,7 @@ export class Model {
     ctx.textAlign = 'right';
     ctx.fillText(
       lineNumber,
-      this.gutterWidth - 20 + letterWidth * col,
+      this.gutterWidth - 20,
       3 + font.lineHeight * 0
     );
 
@@ -524,6 +521,23 @@ export class Model {
         this.gutterWidth + letterWidth * (2 * i),
         0,
         1,
+        font.lineHeight
+      );
+    }
+  }
+
+  public renderCaret({ ctx, font, letterWidth, theme }: Editor, row: number) {
+    if (this.selections.length > 1) {
+      return;
+    }
+
+    const s = this.selections[0].start;
+    if (s.y === row) {
+      ctx.fillStyle = theme.caret;
+      ctx.fillRect(
+        this.gutterWidth + letterWidth * Math.min(this.text[s.y].length , s.x),
+        0,
+        2,
         font.lineHeight
       );
     }

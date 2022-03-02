@@ -2,24 +2,8 @@
   position: absolute;
   left: 0px;
   top: 0px;
-  z-index: 10;
-  border: none;
-  margin: -0.1em 0 0 0;
-  padding: 0px;
   outline: none;
-  visibility: visible;
-  color: transparent;
-  width: 2px;
-  pointer-events: none;
-  caret-color: transparent;
-  /* opacity: 0.9; */
-  /* transition: all 0.03s; */
-  translate: transformZ(0);
-  /* animation: pulse 0.99s linear infinite; */
-}
-
-#app input:not(:focus) {
-  background-color: transparent !important;
+  z-index: -1;
 }
 
 #footer {
@@ -38,22 +22,4 @@
 
 #footer * {
   color: orange;
-}
-
-@keyframes pulse {
-  0% {
-    opacity: 1;
-  }
-  60% {
-    opacity: 1;
-  }
-  65% {
-    opacity: 0;
-  }
-  95% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
 }

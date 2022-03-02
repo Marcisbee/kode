@@ -1,11 +1,11 @@
 import type { Editor, EditorRenderState } from './editor';
 import { Line, LinesShrink } from './model';
 
-export function createInput({ canvas, font, theme }: Editor) {
+export function createInput({ canvas, font }: Editor) {
   const i = document.createElement('input');
 
   Object.assign(i.style, {
-    background: theme.caret,
+    background: 'transparent',
     height: `${font.lineHeight}px`,
     font: `${font.lineHeight}px ${font.family}`,
   });

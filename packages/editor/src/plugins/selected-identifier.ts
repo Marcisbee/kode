@@ -1,4 +1,5 @@
 import type { Model } from '../model';
+import { selectRegion } from '../utils/select-region';
 
 import type { EditorPlugin } from './types';
 
@@ -7,44 +8,10 @@ export function selectedIdentifier({ text, selections }: Model): string | void {
     return;
   }
 
-  const x = selections[0].start.x;
-  const y = selections[0].start.y;
-
+  const { x, y } = selections[0].start;
   const line = text[y];
 
-  if (!line[x]?.trim() && !line[x - 1]?.trim()) {
-    return;
-  }
-
-  const before = [...line.substring(0, x)].reverse();
-  const after = line.substring(x);
-
-  let word = '';
-  for (let i = 0; i < after.length; i++) {
-    const char = after[i];
-
-    if (!/\w/.test(char)) {
-      break;
-    }
-
-    word += char;
-  }
-
-  for (let i = 0; i < before.length; i++) {
-    const char = before[i];
-
-    if (!/\w/.test(char)) {
-      break;
-    }
-
-    word = char + word;
-  }
-
-  if (!word.length) {
-    return;
-  }
-
-  return word;
+  return line.substring(...selectRegion(line, x));
 }
 
 export function selectedIdentifierPlugin(): EditorPlugin {
