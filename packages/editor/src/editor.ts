@@ -135,8 +135,8 @@ export class Editor {
     window.addEventListener('resize', this._onResize, false);
     window.addEventListener('orientationchange', this._onResize, false);
 
-    this.container.addEventListener('mousewheel', (e) => e.preventDefault(), true);
-    this.canvas.addEventListener('mousewheel', this._onWheel, {
+    this.container.addEventListener('wheel', (e) => e.preventDefault(), true);
+    this.canvas.addEventListener('wheel', this._onWheel, {
       capture: true,
       passive: true,
     });
