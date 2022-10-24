@@ -12,3 +12,6 @@ export class Store extends Exome {
 registerLoadable({ Store });
 
 export const store = new Store();
+
+// @TODO: For testing only
+// store.setWorkspace(new Workspace('/var/www/private/kode'));

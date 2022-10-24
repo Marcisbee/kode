@@ -17,7 +17,7 @@ export function EditorComponent() {
   const { editor } = useStore(store.workspace!);
   const editorWrapper = useRef<HTMLElement>(null);
 
-  useLayoutEffect(() => {
+  useLayoutEffect(async () => {
     if (!editorWrapper.current) {
       return;
     }
@@ -45,6 +45,11 @@ export function EditorComponent() {
         return;
       }
     });
+
+    console.time('git diff');
+    let info = await Neutralino.os.execCommand('git diff --U0 --no-color --word-diff=none --no-renames');
+    console.timeEnd('git diff');
+    console.log(info.stdOut);
 
     editor.mount(editorWrapper.current);
   }, []);
