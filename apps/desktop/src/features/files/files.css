@@ -5,14 +5,20 @@
   width: 200px;
   height: 100vh;
   max-height: 100vh;
-  padding: 20px 0;
+  padding: 10px 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
-#left > ul {
-  height: 90vh;
+#left h2 {
+  font-size: 20px;
+  margin: 0 0 3px 18px;
+}
+
+#left div > ul {
+  height: 89vh;
+  padding-bottom: 10px;
 }
 
 #left ul {

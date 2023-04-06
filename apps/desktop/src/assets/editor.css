@@ -41,7 +41,7 @@
 
 #editorWrapper {
   width: 100%;
-  height: calc(100% - 56px);
+  height: calc(100% - 36px);
   padding: 0 0 5px 0;
   background-color: #282c34;
   border-radius: 0 0 5px 5px;
@@ -49,5 +49,5 @@
 
 #editor {
   width: 100%;
-  height: calc(100% - 5px);
+  height: 100%;
 }

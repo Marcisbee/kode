@@ -5,6 +5,17 @@ import { Files } from './features/files/files';
 import { Welcome } from './features/welcome/welcome';
 import { store } from './store';
 
+function FileTabs() {
+  const { workspace } = useStore(store);
+  const { currentFile } = useStore(workspace!);
+
+  if (!currentFile) {
+    return null;
+  }
+
+  return <li>{currentFile?.name}</li>
+}
+
 export function App() {
   const { workspace } = useStore(store);
 
@@ -21,7 +32,7 @@ export function App() {
       <div id="content">
         <div id="tabs">
           <ul>
-            <li>main.ts</li>
+            <FileTabs />
           </ul>
         </div>
 
