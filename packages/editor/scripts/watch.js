@@ -1,3 +1,4 @@
+// @ts-check
 const esbuild = require('esbuild');
 
 esbuild
@@ -7,8 +8,10 @@ esbuild
     entryPoints: ['./src/main.ts'],
     bundle: true,
     legalComments: 'external',
-    sourcemap: 'inline',
+    sourcemap: 'external',
     format: 'esm',
+    minify: true,
+    treeShaking: true,
     define: {
       'process.env.NODE_ENV': '"development"',
     },

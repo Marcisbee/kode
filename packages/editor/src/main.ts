@@ -17,272 +17,275 @@ const editor = document.querySelector<HTMLDivElement>('#editor')!;
 //   public inputPlugins: InputPlugin[] = [];
 // }`).join('\n\n');
 
-const model = new Model(`import { Model, ModelSelection } from './model';
-import { autoClosePlugin } from './plugins/auto-close';
-import { footerPlugin } from './plugins/footer';
-import { keyMapPlugin } from './plugins/key-map';
-import { preserveIndent } from './plugins/preserve-indent';
-import { scrollbarPlugin } from './plugins/scrollbar';
-import { selectedIdentifierPlugin } from './plugins/selected-identifier';
-import { selectedLinePlugin } from './plugins/selected-line';
-import { tabPlugin } from './plugins/tab';
-import type {
-  EditorPlugin,
-  EditorPluginConfig,
-  InputPlugin,
-  ModelPlugin,
-} from './plugins/types';
-import { AtomOneDark } from './themes/atom-one-dark';
-import { createInput, measureText } from './utils';
 
-interface EditorFontConfig {
-  size: number;
-  family: string;
-  lineHeight: number;
-}
+const model = new Model();
 
-const devicePixelRatio = window.devicePixelRatio || 1;
+// const model = new Model(`import { Model, ModelSelection } from './model';
+// import { autoClosePlugin } from './plugins/auto-close';
+// import { footerPlugin } from './plugins/footer';
+// import { keyMapPlugin } from './plugins/key-map';
+// import { preserveIndent } from './plugins/preserve-indent';
+// import { scrollbarPlugin } from './plugins/scrollbar';
+// import { selectedIdentifierPlugin } from './plugins/selected-identifier';
+// import { selectedLinePlugin } from './plugins/selected-line';
+// import { tabPlugin } from './plugins/tab';
+// import type {
+//   EditorPlugin,
+//   EditorPluginConfig,
+//   InputPlugin,
+//   ModelPlugin,
+// } from './plugins/types';
+// import { AtomOneDark } from './themes/atom-one-dark';
+// import { createInput, measureText } from './utils';
 
-export class Editor {
-  public scroll: number = 0;
-  public input: HTMLInputElement;
+// interface EditorFontConfig {
+//   size: number;
+//   family: string;
+//   lineHeight: number;
+// }
 
-  public editorPlugins: EditorPlugin[] = [];
-  public modelPlugins: ModelPlugin[] = [];
-  public inputPlugins: InputPlugin[] = [];
+// const devicePixelRatio = window.devicePixelRatio || 1;
 
-  private offScreenCanvas = document.createElement('canvas');
-  private realCtx: CanvasRenderingContext2D;
-  public ctx = this.offScreenCanvas.getContext('2d')!;
+// export class Editor {
+//   public scroll: number = 0;
+//   public input: HTMLInputElement;
 
-  public letterWidth: number;
-  public readonly height!: number;
-  public readonly width!: number;
+//   public editorPlugins: EditorPlugin[] = [];
+//   public modelPlugins: ModelPlugin[] = [];
+//   public inputPlugins: InputPlugin[] = [];
 
-  constructor(
-    public canvas: HTMLCanvasElement,
-    public model = new Model(['']),
-    public theme: Record<string, string> = AtomOneDark,
-    public plugins: EditorPluginConfig[] = [
-      selectedLinePlugin(),
-      footerPlugin(),
-      selectedIdentifierPlugin(),
-      autoClosePlugin(),
-      keyMapPlugin(),
-      tabPlugin(),
-      preserveIndent(),
-      scrollbarPlugin(),
-    ],
-    public font: EditorFontConfig = {
-      size: 12,
-      family: '"Menlo", monospace',
-      lineHeight: 12 * 1.5,
-    }
-  ) {
-    this.editorPlugins = plugins
-      .map(({ editor }) => editor)
-      .filter(Boolean) as any;
-    this.modelPlugins = plugins
-      .map(({ model }) => model)
-      .filter(Boolean) as any;
-    this.inputPlugins = plugins
-      .map(({ input }) => input?.(this))
-      .filter(Boolean) as any;
+//   private offScreenCanvas = document.createElement('canvas');
+//   private realCtx: CanvasRenderingContext2D;
+//   public ctx = this.offScreenCanvas.getContext('2d')!;
 
-    const measurements = measureText(
-      'SELECTED',
-      \`\${font.size}px \${font.family}\`
-    );
+//   public letterWidth: number;
+//   public readonly height!: number;
+//   public readonly width!: number;
 
-    this.letterWidth = measurements.width / 8;
+//   constructor(
+//     public canvas: HTMLCanvasElement,
+//     public model = new Model(['']),
+//     public theme: Record<string, string> = AtomOneDark,
+//     public plugins: EditorPluginConfig[] = [
+//       selectedLinePlugin(),
+//       footerPlugin(),
+//       selectedIdentifierPlugin(),
+//       autoClosePlugin(),
+//       keyMapPlugin(),
+//       tabPlugin(),
+//       preserveIndent(),
+//       scrollbarPlugin(),
+//     ],
+//     public font: EditorFontConfig = {
+//       size: 12,
+//       family: '"Menlo", monospace',
+//       lineHeight: 12 * 1.5,
+//     }
+//   ) {
+//     this.editorPlugins = plugins
+//       .map(({ editor }) => editor)
+//       .filter(Boolean) as any;
+//     this.modelPlugins = plugins
+//       .map(({ model }) => model)
+//       .filter(Boolean) as any;
+//     this.inputPlugins = plugins
+//       .map(({ input }) => input?.(this))
+//       .filter(Boolean) as any;
 
-    this.realCtx = canvas.getContext('2d')!;
-    this.input = createInput(this);
+//     const measurements = measureText(
+//       'SELECTED',
+//       \`\${font.size}px \${font.family}\`
+//     );
 
-    this.canvas.style.letterSpacing = '0px';
-    this.offScreenCanvas.style.letterSpacing = '0px';
+//     this.letterWidth = measurements.width / 8;
 
-    this.input.addEventListener('keydown', this.onInput, false);
+//     this.realCtx = canvas.getContext('2d')!;
+//     this.input = createInput(this);
 
-    window.addEventListener('resize', this.onResize, false);
-    window.addEventListener('orientationchange', this.onResize, false);
+//     this.canvas.style.letterSpacing = '0px';
+//     this.offScreenCanvas.style.letterSpacing = '0px';
 
-    this.canvas.addEventListener('mousewheel', this.onWheel, false);
-    this.canvas.addEventListener('mousedown', this.onMouseDown, false);
+//     this.input.addEventListener('keydown', this.onInput, false);
 
-    this.onResize();
-  }
+//     window.addEventListener('resize', this.onResize, false);
+//     window.addEventListener('orientationchange', this.onResize, false);
 
-  private onResize = () => {
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    const wRatio = w * devicePixelRatio;
-    const hRatio = h * devicePixelRatio;
+//     this.canvas.addEventListener('mousewheel', this.onWheel, false);
+//     this.canvas.addEventListener('mousedown', this.onMouseDown, false);
 
-    (this.width as any) = w;
-    (this.height as any) = h;
+//     this.onResize();
+//   }
 
-    this.canvas.width = wRatio;
-    this.canvas.height = hRatio;
-    this.offScreenCanvas.width = wRatio;
-    this.offScreenCanvas.height = hRatio;
+//   private onResize = () => {
+//     const w = window.innerWidth;
+//     const h = window.innerHeight;
+//     const wRatio = w * devicePixelRatio;
+//     const hRatio = h * devicePixelRatio;
 
-    this.canvas.style.width = \`\${w}px\`;
-    this.canvas.style.height = \`\${h}px\`;
-    this.offScreenCanvas.style.width = \`\${w}px\`;
-    this.offScreenCanvas.style.height = \`\${h}px\`;
+//     (this.width as any) = w;
+//     (this.height as any) = h;
 
-    this.ctx.scale(devicePixelRatio, devicePixelRatio);
-    this.realCtx.scale(devicePixelRatio, devicePixelRatio);
+//     this.canvas.width = wRatio;
+//     this.canvas.height = hRatio;
+//     this.offScreenCanvas.width = wRatio;
+//     this.offScreenCanvas.height = hRatio;
 
-    this.renderModel();
-  };
+//     this.canvas.style.width = \`\${w}px\`;
+//     this.canvas.style.height = \`\${h}px\`;
+//     this.offScreenCanvas.style.width = \`\${w}px\`;
+//     this.offScreenCanvas.style.height = \`\${h}px\`;
 
-  private onInput = (e: KeyboardEvent) => {
-    e.preventDefault();
+//     this.ctx.scale(devicePixelRatio, devicePixelRatio);
+//     this.realCtx.scale(devicePixelRatio, devicePixelRatio);
 
-    this.updateCaret();
+//     this.renderModel();
+//   };
 
-    for (const pluginEnd of this.inputPlugins) {
-      pluginEnd!(e);
-    }
+//   private onInput = (e: KeyboardEvent) => {
+//     e.preventDefault();
 
-    this.renderModel();
-  };
+//     this.updateCaret();
 
-  private onWheel = (e: any) => {
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
+//     for (const pluginEnd of this.inputPlugins) {
+//       pluginEnd!(e);
+//     }
 
-    const previousScroll = this.scroll;
-    const scrollLimit = (this.model.text.length - 1) * this.font.lineHeight;
+//     this.renderModel();
+//   };
 
-    this.scroll = Math.min(scrollLimit, Math.max(0, this.scroll + e.deltaY));
+//   private onWheel = (e: any) => {
+//     e.preventDefault();
+//     e.stopPropagation();
+//     e.stopImmediatePropagation();
 
-    if (this.scroll === previousScroll) {
-      return;
-    }
+//     const previousScroll = this.scroll;
+//     const scrollLimit = (this.model.text.length - 1) * this.font.lineHeight;
 
-    this.renderModel();
+//     this.scroll = Math.min(scrollLimit, Math.max(0, this.scroll + e.deltaY));
 
-    return false;
-  };
+//     if (this.scroll === previousScroll) {
+//       return;
+//     }
 
-  private onMouseDown = (e: MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+//     this.renderModel();
 
-    const { text, gutterWidth } = this.model;
+//     return false;
+//   };
 
-    const selection: ModelSelection = {
-      start: {
-        ...this.model.selections[0].start,
-      },
-    };
+//   private onMouseDown = (e: MouseEvent) => {
+//     e.preventDefault();
+//     e.stopPropagation();
 
-    this.model.selections[0] = selection;
+//     const { text, gutterWidth } = this.model;
 
-    let initialX: number;
-    let initialY: number;
+//     const selection: ModelSelection = {
+//       start: {
+//         ...this.model.selections[0].start,
+//       },
+//     };
 
-    const onMouseMove = (e: MouseEvent) => {
-      const y = Math.min(
-        text.length,
-        Math.floor((e.offsetY + this.scroll) / this.font.lineHeight)
-      );
-      const x = Math.min(
-        text[y]?.length || text[text.length - 1].length,
-        Math.max(0, Math.round((e.offsetX - gutterWidth) / this.letterWidth))
-      );
+//     this.model.selections[0] = selection;
 
-      if (initialX === undefined && initialY === undefined) {
-        initialX = x;
-        initialY = y;
-      }
+//     let initialX: number;
+//     let initialY: number;
 
-      const inverse = (y === initialY && x <= initialX) || (y < initialY);
+//     const onMouseMove = (e: MouseEvent) => {
+//       const y = Math.min(
+//         text.length,
+//         Math.floor((e.offsetY + this.scroll) / this.font.lineHeight)
+//       );
+//       const x = Math.min(
+//         text[y]?.length || text[text.length - 1].length,
+//         Math.max(0, Math.round((e.offsetX - gutterWidth) / this.letterWidth))
+//       );
 
-      const newStartX = !inverse ? initialX : x;
-      const newStartY = !inverse ? initialY : y;
-      const newEndX = inverse ? initialX : x;
-      const newEndY = inverse ? initialY : y;
+//       if (initialX === undefined && initialY === undefined) {
+//         initialX = x;
+//         initialY = y;
+//       }
 
-      const sameStart = newStartX === selection.start.x && newStartY === selection.start.y;
-      const sameEnd = newEndX === selection.end?.x && newEndY === selection.end?.y;
+//       const inverse = (y === initialY && x <= initialX) || (y < initialY);
 
-      if (sameStart && sameEnd) {
-        return;
-      }
+//       const newStartX = !inverse ? initialX : x;
+//       const newStartY = !inverse ? initialY : y;
+//       const newEndX = inverse ? initialX : x;
+//       const newEndY = inverse ? initialY : y;
 
-      selection.start.x = newStartX;
-      selection.start.y = newStartY;
+//       const sameStart = newStartX === selection.start.x && newStartY === selection.start.y;
+//       const sameEnd = newEndX === selection.end?.x && newEndY === selection.end?.y;
 
-      if (initialX !== x || initialY !== y) {
-        if (!selection.end) {
-          selection.end = {} as any;
-        }
+//       if (sameStart && sameEnd) {
+//         return;
+//       }
 
-        selection.end!.x = newEndX;
-        selection.end!.y = newEndY;
-      } else {
-        selection.end = undefined;
-      }
+//       selection.start.x = newStartX;
+//       selection.start.y = newStartY;
 
-      this.updateCaret();
-      this.renderModel();
-    };
+//       if (initialX !== x || initialY !== y) {
+//         if (!selection.end) {
+//           selection.end = {} as any;
+//         }
 
-    onMouseMove(e);
+//         selection.end!.x = newEndX;
+//         selection.end!.y = newEndY;
+//       } else {
+//         selection.end = undefined;
+//       }
 
-    window.addEventListener('mousemove', onMouseMove, false);
+//       this.updateCaret();
+//       this.renderModel();
+//     };
 
-    const onMouseUp = () => {
-      window.removeEventListener('mousemove', onMouseMove);
-      this.canvas.removeEventListener('mouseup', onMouseUp);
-    };
+//     onMouseMove(e);
 
-    this.canvas.addEventListener('mouseup', onMouseUp, false);
-  };
+//     window.addEventListener('mousemove', onMouseMove, false);
 
-  private updateCaret() {
-    const i = this.input;
-    const anim = i.style.animation;
-    i.style.animation = 'none';
-    i.offsetHeight; /* trigger reflow */
-    i.style.animation = anim;
-  }
+//     const onMouseUp = () => {
+//       window.removeEventListener('mousemove', onMouseMove);
+//       this.canvas.removeEventListener('mouseup', onMouseUp);
+//     };
 
-  private renderModel() {
-    const { ctx, realCtx, editorPlugins, model, canvas, offScreenCanvas } =
-      this;
+//     this.canvas.addEventListener('mouseup', onMouseUp, false);
+//   };
 
-    ctx.fillStyle = this.theme.bg;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+//   private updateCaret() {
+//     const i = this.input;
+//     const anim = i.style.animation;
+//     i.style.animation = 'none';
+//     i.offsetHeight; /* trigger reflow */
+//     i.style.animation = anim;
+//   }
 
-    ctx.save();
-    ctx.translate(0, -this.scroll);
+//   private renderModel() {
+//     const { ctx, realCtx, editorPlugins, model, canvas, offScreenCanvas } =
+//       this;
 
-    const plugins = editorPlugins.map((fn) => fn(this)).filter(Boolean);
+//     ctx.fillStyle = this.theme.bg;
+//     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    model.render(this);
+//     ctx.save();
+//     ctx.translate(0, -this.scroll);
 
-    for (const pluginEnd of plugins) {
-      pluginEnd!();
-    }
+//     const plugins = editorPlugins.map((fn) => fn(this)).filter(Boolean);
 
-    ctx.restore();
+//     model.render(this);
 
-    realCtx.drawImage(
-      offScreenCanvas,
-      0,
-      0,
-      offScreenCanvas.width / devicePixelRatio,
-      offScreenCanvas.height / devicePixelRatio
-    );
-  }
-}
-`.split('\n'));
+//     for (const pluginEnd of plugins) {
+//       pluginEnd!();
+//     }
+
+//     ctx.restore();
+
+//     realCtx.drawImage(
+//       offScreenCanvas,
+//       0,
+//       0,
+//       offScreenCanvas.width / devicePixelRatio,
+//       offScreenCanvas.height / devicePixelRatio
+//     );
+//   }
+// }
+// `.split('\n'));
 
 const EditorInstance = new Editor(
   model,
