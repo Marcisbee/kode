@@ -224,6 +224,10 @@ export class Editor {
   };
 
   private _onMouseDown = (e: MouseEvent) => {
+    if (e.button !== 0) {
+      return;
+    }
+
     e.preventDefault();
     e.stopPropagation();
 
