@@ -80,7 +80,7 @@ export class Line implements LineRenderer {
       ctx.fillText(
         content,
         model.gutterWidth + letterWidth * col,
-        2
+        this.height * 0.22
       );
 
       col += content.length;
@@ -127,24 +127,24 @@ function squashPlugin(editor: Editor) {
   const update = () => {
     const { state, font } = editor;
 
-    let foldedLines: [number, number][] = [];
-    if (state.autoFoldLines > 0) {
-      foldedLines = [
-        // @TODO: Handle empty lines maybe
-        // [17 - 1, 19 - 1],
-        // [23 - 1, 25 - 1],
-        // [25 - 1, 27 - 1],
-        [19 - 1, 23 - 1],
-        [43 - 1, 62 - 1],
-        [62 - 1, 95 - 1],
-        [97 - 1, 120 - 1],
-        [122 - 1, 132 - 1],
-        [134 - 1, 151 - 1],
-        [153 - 1, 227 - 1],
-        [229 - 1, 235 - 1],
-        [237 - 1, 264 - 1],
-      ];
-    }
+    // let foldedLines: [number, number][] = [];
+    // if (state.autoFoldLines > 0) {
+    //   foldedLines = [
+    //     // @TODO: Handle empty lines maybe
+    //     // [17 - 1, 19 - 1],
+    //     // [23 - 1, 25 - 1],
+    //     // [25 - 1, 27 - 1],
+    //     [19 - 1, 23 - 1],
+    //     [43 - 1, 62 - 1],
+    //     [62 - 1, 95 - 1],
+    //     [97 - 1, 120 - 1],
+    //     [122 - 1, 132 - 1],
+    //     [134 - 1, 151 - 1],
+    //     [153 - 1, 227 - 1],
+    //     [229 - 1, 235 - 1],
+    //     [237 - 1, 264 - 1],
+    //   ];
+    // }
     let lastSkipped!: number;
 
     state.lines = [];
@@ -157,13 +157,13 @@ function squashPlugin(editor: Editor) {
     for (let row = 0; row < tokens.length; row++) {
       const line = tokens[row];
 
-      for (let i = 0; i < foldedLines.length; i++) {
-        const folds = foldedLines[i];
-        if (!(row <= folds[0] || row >= folds[1])) {
-          lastSkipped = row;
-          continue tokenLoop;
-        }
-      }
+      // for (let i = 0; i < foldedLines.length; i++) {
+      //   const folds = foldedLines[i];
+      //   if (!(row <= folds[0] || row >= folds[1])) {
+      //     lastSkipped = row;
+      //     continue tokenLoop;
+      //   }
+      // }
 
       const lastWasSkippedLine = lastSkipped != null && lastSkipped + 1 === row;
 
@@ -471,7 +471,7 @@ export class Model {
     ctx.fillText(
       lineNumber,
       this.gutterWidth - 20,
-      3 + font.lineHeight * 0
+      font.lineHeight * 0.9 * 0.3
     );
 
     ctx.font = lastFontStyle;

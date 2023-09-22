@@ -4,6 +4,9 @@
   top: 0px;
   outline: none;
   z-index: -1;
+  padding: 0;
+  margin: 0;
+  border: 0;
 }
 
 #footer {

@@ -1,7 +1,8 @@
 import type { Token } from './lexer';
 import { Line, LinesShrink, Model, ModelSelection } from './model';
 import { autoClosePlugin } from './plugins/auto-close';
-// import { footerPlugin } from './plugins/footer';
+import { autoHeightPlugin } from './plugins/auto-height';
+import { footerPlugin } from './plugins/footer';
 import { keyMapPlugin } from './plugins/key-map';
 import { preserveIndent } from './plugins/preserve-indent';
 import { scrollbarPlugin } from './plugins/scrollbar';
@@ -32,14 +33,15 @@ export interface EditorRenderState {
 
 export const recommendedPlugins: EditorPlugin[] = [
   selectedLinePlugin(),
-  // footerPlugin(),
+  footerPlugin(),
   selectedIdentifierPlugin(),
   autoClosePlugin(),
   keyMapPlugin(),
   tabPlugin(),
   preserveIndent(),
-  scrollbarPlugin(),
+  // scrollbarPlugin(),
   // statsPlugin(),
+  autoHeightPlugin(),
 ];
 
 interface EditorEvents {
@@ -60,8 +62,8 @@ export class Editor {
   private _offScreenCanvas = document.createElement('canvas');
   private _realCtx: CanvasRenderingContext2D;
   private _label: HTMLLabelElement;
-  private container?: HTMLElement;
 
+  public container?: HTMLElement;
   public canvas!: HTMLCanvasElement;
   public ctx = this._offScreenCanvas.getContext('2d', canvasSettings)!;
 
@@ -136,18 +138,18 @@ export class Editor {
     window.addEventListener('resize', this._onResize, false);
     window.addEventListener('orientationchange', this._onResize, false);
 
-    this.container.addEventListener('wheel', (e) => e.preventDefault(), true);
-    this.canvas.addEventListener('wheel', this._onWheel, {
-      capture: true,
-      passive: true,
-    });
+    // this.container.addEventListener('wheel', (e) => e.preventDefault(), true);
+    // this.canvas.addEventListener('wheel', this._onWheel, {
+    //   capture: true,
+    //   passive: true,
+    // });
     this.canvas.addEventListener('mousedown', this._onMouseDown);
     this.canvas.addEventListener('dblclick', this._onDblClick);
 
     this._onResize();
   }
 
-  private _onResize = () => {
+  public _onResize = () => {
     const w = this.container!.clientWidth;
     const h = this.container!.clientHeight;
     const wRatio = w * devicePixelRatio;

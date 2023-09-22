@@ -5,7 +5,7 @@
   "types": "./src/kode.ts",
   "license": "MIT",
   "scripts": {
-    "dev": "node scripts/watch",
+    "dev": "node scripts/watch.mjs",
     "build": "node scripts/build"
   },
   "devDependencies": {
