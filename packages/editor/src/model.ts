@@ -496,7 +496,7 @@ export class Model {
     ctx.fillText(
       message,
       this.gutterWidth + (this.text[line].length + 5) * letterWidth,
-      2,
+      font.lineHeight * 0.9 * 0.3
     );
   }
 
