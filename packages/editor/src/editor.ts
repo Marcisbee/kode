@@ -33,7 +33,7 @@ export interface EditorRenderState {
 
 export const recommendedPlugins: EditorPlugin[] = [
   selectedLinePlugin(),
-  footerPlugin(),
+  // footerPlugin(),
   selectedIdentifierPlugin(),
   autoClosePlugin(),
   keyMapPlugin(),
