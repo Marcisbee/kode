@@ -138,6 +138,14 @@ export function keyMapPlugin(): EditorPlugin {
           const lineLength = model.text[y].length;
           const currentCol = Math.min(x, lineLength);
 
+          if (end) {
+            const startLine = model.text[start.y].slice(0, start.x) || '';
+            const endLine = model.text[end.y].slice(end.x) || '';
+            model.text.splice(start.y, end.y - start.y + 1, startLine + endLine);
+            selection.end = undefined;
+            continue;
+          }
+
           if (currentCol === 0 && y - 1 >= 0) {
             // Should move to previous line
             chunks = model.text.slice(y - 1, y + 1);
@@ -158,6 +166,15 @@ export function keyMapPlugin(): EditorPlugin {
 
         if (event.key?.length === 1) {
           const chunks = [];
+
+          if (end) {
+            const startLine = model.text[start.y].slice(0, start.x) || '';
+            const endLine = model.text[end.y].slice(end.x) || '';
+            model.text.splice(start.y, end.y - start.y + 1, startLine + event.key + endLine);
+            start.x += 1;
+            selection.end = undefined;
+            continue;
+          }
 
           chunks.push(
             model.text[y].substring(0, x),
